@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Wi-Fi Intelligence | Sign In</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="login-page">
+
+    <main class="login-wrapper">
+
+        <!-- =====================================================
+             LEFT SIDE - PROJECT INTRODUCTION
+        ====================================================== -->
+
+        <section class="login-visual">
+
+            <div class="visual-overlay"></div>
+
+            <!-- BRAND -->
+            <div class="brand-block">
+
+                <div class="brand-icon large">
+                    ⌁
+                </div>
+
+                <div>
+                    <h1>Wi-Fi Intelligence</h1>
+
+                    <p>
+                        AI-Based Signal Mapping System
+                    </p>
+                </div>
+
+            </div>
+
+
+            <!-- MAIN INTRODUCTION -->
+            <div class="visual-content">
+
+                <span class="eyebrow">
+                    INTELLIGENT WI-FI MONITORING
+                </span>
+
+
+                <h2>
+
+                    Smarter Wi-Fi coverage.
+
+                    <span>
+                        Better connectivity.
+                    </span>
+
+                </h2>
+
+
+                <p>
+
+                    Monitor wireless signal strength, identify
+                    weak coverage zones, visualize Wi-Fi coverage,
+                    and generate intelligent router placement
+                    recommendations.
+
+                </p>
+
+
+                <!-- SYSTEM FEATURES -->
+                <div class="visual-stats">
+
+                    <div>
+
+                        <strong>
+                            5
+                        </strong>
+
+                        <span>
+                            Signal Levels
+                        </span>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Real-Time
+                        </strong>
+
+                        <span>
+                            Wi-Fi Monitoring
+                        </span>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            AI
+                        </strong>
+
+                        <span>
+                            Signal Analysis
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- FOOTER -->
+            <div class="visual-footer">
+
+                <span>
+                    Wi-Fi Signal Mapping &amp; Intelligent Router Placement
+                </span>
+
+                <span>
+                    ECE PROJECT
+                </span>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =====================================================
+             RIGHT SIDE - LOGIN
+        ====================================================== -->
+
+        <section class="login-panel">
+
+            <div class="login-card">
+
+
+                <!-- MOBILE BRAND -->
+                <div class="mobile-logo">
+
+                    <div class="brand-icon">
+                        ⌁
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Wi-Fi Intelligence
+                        </strong>
+
+                        <span>
+                            Signal Mapping System
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- LOGIN HEADING -->
+                <div class="login-heading">
+
+                    <span class="eyebrow blue">
+                        SECURE ACCESS
+                    </span>
+
+
+                    <h2>
+                        Sign in to your dashboard
+                    </h2>
+
+
+                    <p>
+                        Access your Wi-Fi monitoring and
+                        intelligent router placement dashboard.
+                    </p>
+
+                </div>
+
+
+
+                <!-- =================================================
+                     LOGIN FORM
+                ================================================== -->
+
+                <form
+                    id="loginForm"
+                    class="login-form"
+                >
+
+
+                    <!-- USERNAME -->
+                    <div class="form-group">
+
+                        <label for="username">
+                            Username
+                        </label>
+
+
+                        <div class="input-wrapper">
+
+                            <span class="input-icon">
+                                ◉
+                            </span>
+
+
+                            <input
+                                type="text"
+                                id="username"
+                                name="username"
+                                placeholder="Enter username"
+                                autocomplete="username"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- PASSWORD -->
+                    <div class="form-group">
+
+                        <label for="password">
+                            Password
+                        </label>
+
+
+                        <div class="input-wrapper">
+
+                            <span class="input-icon">
+                                ●
+                            </span>
+
+
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Enter password"
+                                autocomplete="current-password"
+                                required
+                            >
+
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                id="togglePassword"
+                                aria-label="Show password"
+                            >
+                                Show
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- LOGIN ERROR -->
+                    <div
+                        id="loginError"
+                        class="login-error"
+                        hidden
+                    >
+                        Invalid username or password.
+                    </div>
+
+
+
+                    <!-- LOGIN BUTTON -->
+                    <button
+                        type="submit"
+                        class="primary-button login-button"
+                    >
+
+                        <span>
+                            Sign In
+                        </span>
+
+                        <span class="button-arrow">
+                            →
+                        </span>
+
+                    </button>
+
+
+                </form>
+
+
+
+                <!-- =================================================
+                     SECURITY INFORMATION
+                ================================================== -->
+
+                <div class="login-bottom">
+
+                    <span>
+                        Wi-Fi Monitoring System
+                    </span>
+
+                    <span>
+                        Secure Dashboard Access
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- JAVASCRIPT -->
+    <script src="script.js"></script>
+
+</body>
+</html>

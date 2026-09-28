@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wi-Fi Signal Mapping | Dashboard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="dashboard-page" data-page="dashboard">
+
+    <div class="app-layout">
+
+        <!-- ================= SIDEBAR ================= -->
+        <aside class="sidebar" id="sidebar">
+
+            <div class="sidebar-brand">
+                <div class="brand-icon">⌁</div>
+
+                <div>
+                    <strong>Wi-Fi Intelligence</strong>
+                    <span>Signal Mapping System</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+
+                <p class="nav-label">MAIN MENU</p>
+
+                <a href="#overview" class="nav-item active">
+                    <span class="nav-icon">▦</span>
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="#current-wifi" class="nav-item">
+                    <span class="nav-icon">⌁</span>
+                    <span>Wi-Fi Information</span>
+                </a>
+
+                <a href="#heatmap" class="nav-item">
+                    <span class="nav-icon">▧</span>
+                    <span>Signal Heat Map</span>
+                </a>
+
+                <a href="#recommendation" class="nav-item">
+                    <span class="nav-icon">✦</span>
+                    <span>AI Recommendation</span>
+                </a>
+
+<p class="nav-label second-label">SYSTEM</p>
+
+<a href="#history" class="nav-item">
+    <span class="nav-icon">◉</span>
+    <span>RSSI History</span>
+</a>
+
+<a href="#weak-zones" class="nav-item">
+    <span class="nav-icon">⚠</span>
+    <span>Weak Zone Detection</span>
+</a>
+
+<a href="#measurements" class="nav-item">
+    <span class="nav-icon">☷</span>
+    <span>Measurements</span>
+</a>
+
+<a href="#system-status" class="nav-item">
+    <span class="nav-icon">⚙</span>
+    <span>Device Status</span>
+</a>
+            </nav>
+
+            <div class="sidebar-bottom">
+
+                <div class="sidebar-project-card">
+                    <span class="project-chip">ECE PROJECT</span>
+                    <h4>Intelligent Router Placement</h4>
+                    <p>Live Wi-Fi analysis dashboard</p>
+                </div>
+
+                <div class="sidebar-user">
+                    <div class="avatar">D</div>
+
+                    <div>
+                        <strong>Project User</strong>
+                        <span>Dashboard User</span>
+                    </div>
+
+                    <span class="user-status"></span>
+                </div>
+
+            </div>
+
+        </aside>
+
+
+        <!-- ================= MAIN WRAPPER ================= -->
+        <div class="main-wrapper">
+
+            <!-- ================= HEADER ================= -->
+            <header class="top-header">
+
+                <div class="header-left">
+
+                    <button class="mobile-menu-button" id="mobileMenuButton">
+                        ☰
+                    </button>
+
+                    <div>
+                        <div class="header-title-row">
+                            <h1>AI-Based Wi-Fi Signal Mapping</h1>
+                        </div>
+
+                        <p>
+                            Real-Time Wi-Fi Monitoring &amp;
+                            Intelligent Router Placement
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div class="header-actions">
+
+                    <div class="system-online">
+                        <span class="online-pulse"></span>
+                        <span>System Online</span>
+                    </div>
+
+                    <div class="header-divider"></div>
+
+                    <button class="logout-button" id="logoutButton">
+                        <span>↪</span>
+                        <span>Logout</span>
+                    </button>
+
+                </div>
+
+            </header>
+
+
+            <!-- ================= DASHBOARD CONTENT ================= -->
+            <main class="dashboard-content" id="overview">
+
+
+                <!-- ================= STAT CARDS ================= -->
+                <section class="stats-grid">
+
+
+                    <!-- CURRENT RSSI -->
+                    <article class="stat-card">
+
+                        <div class="stat-card-top">
+                            <div class="stat-icon blue-icon">⌁</div>
+                            <span class="trend positive">Live</span>
+                        </div>
+
+                        <p class="stat-label">Current RSSI</p>
+
+                        <h2 id="currentRSSI">
+                            <span data-wifi="rssi">--</span>
+                            <small>dBm</small>
+                        </h2>
+
+                        <p class="stat-description">
+                            Current Wi-Fi signal strength
+                        </p>
+
+                    </article>
+
+
+                    <!-- SIGNAL QUALITY -->
+                    <article class="stat-card">
+
+                        <div class="stat-card-top">
+                            <div class="stat-icon green-icon">✓</div>
+                            <span class="trend positive">Live</span>
+                        </div>
+
+                        <p class="stat-label">Signal Quality</p>
+
+                        <h2 id="signalQuality">
+                            <span data-wifi="signal-percent">--</span>
+                            <small>%</small>
+                        </h2>
+
+                        <p class="stat-description">
+                            Current connection quality
+                        </p>
+
+                    </article>
+
+
+                    <!-- SSID -->
+                    <article class="stat-card">
+
+                        <div class="stat-card-top">
+                            <div class="stat-icon cyan-icon">⌂</div>
+                            <span class="status-pill connected">
+                                Connected
+                            </span>
+                        </div>
+
+                        <p class="stat-label">Current Wi-Fi SSID</p>
+
+                        <h2
+                            class="text-value"
+                            id="currentSSID"
+                            data-wifi="ssid"
+                        >
+                            Loading...
+                        </h2>
+
+                        <p class="stat-description">
+                            Currently connected wireless network
+                        </p>
+
+                    </article>
+
+
+                    <!-- LOCATION -->
+                    <article class="stat-card">
+
+                        <div class="stat-card-top">
+                            <div class="stat-icon orange-icon">⌖</div>
+                            <span class="trend neutral">Live</span>
+                        </div>
+
+                        <p class="stat-label">Measurement Location</p>
+
+                        <h2 id="measurementLocation">
+                            Waiting...
+                        </h2>
+
+                        <p
+                            class="stat-description"
+                            id="measurementLocationDescription"
+                        >
+                            Latest Wi-Fi measurement
+                        </p>
+
+                    </article>
+
+
+                    <!-- TOTAL MEASUREMENTS -->
+                    <article class="stat-card">
+
+                        <div class="stat-card-top">
+                            <div class="stat-icon purple-icon">#</div>
+                            <span class="trend neutral">Live</span>
+                        </div>
+
+                        <p class="stat-label">Total Measurements</p>
+
+                        <h2>
+                            <span id="totalMeasurements">0</span>
+                            <small>points</small>
+                        </h2>
+
+                        <p class="stat-description">
+                            Real Wi-Fi measurements
+                        </p>
+
+                    </article>
+
+
+                    <!-- DEVICE STATUS -->
+                    <article class="stat-card">
+
+                        <div class="stat-card-top">
+                            <div class="stat-icon green-icon">◉</div>
+
+                            <span class="status-pill connected">
+                                Online
+                            </span>
+                        </div>
+
+                        <p class="stat-label">Device Status</p>
+
+                        <h2 id="deviceStatus">
+                            Laptop Wi-Fi
+                        </h2>
+
+                        <p class="stat-description">
+                            Connected to Flask API
+                        </p>
+
+                    </article>
+
+                </section>
+
+
+
+                <!-- ================= DASHBOARD GRID ================= -->
+                <div class="dashboard-grid">
+
+
+                    <!-- ================================================= -->
+                    <!-- CURRENT WI-FI INFORMATION -->
+                    <!-- ================================================= -->
+
+                    <section
+                        class="panel wide-panel"
+                        id="current-wifi"
+                    >
+
+                        <div class="panel-header">
+
+                            <div>
+                                <span class="section-kicker">
+                                    NETWORK OVERVIEW
+                                </span>
+
+                                <h2>
+                                    Current Wi-Fi Information
+                                </h2>
+                            </div>
+
+                            <span class="panel-tag">
+                                LIVE NETWORK
+                            </span>
+
+                        </div>
+
+
+                        <div class="wifi-info-layout">
+
+
+                            <!-- MAIN RSSI -->
+                            <div class="wifi-main-card">
+
+                                <div class="wifi-signal-ring">
+
+                                    <div>
+                                        <strong
+                                            id="mainRSSI"
+                                            data-wifi="rssi"
+                                        >
+                                            --
+                                        </strong>
+
+                                        <span>dBm</span>
+                                    </div>
+
+                                </div>
+
+
+                                <div class="wifi-main-details">
+
+                                    <span class="signal-badge excellent">
+                                        Signal Status
+                                    </span>
+
+                                    <h3
+                                        id="mainSSID"
+                                        data-wifi="ssid"
+                                    >
+                                        Loading...
+                                    </h3>
+
+                                    <p>
+                                        Wireless network currently being monitored
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- WIFI DETAILS -->
+                            <div class="wifi-details-grid">
+
+
+                                <!-- SIGNAL QUALITY -->
+                                <div class="detail-item">
+
+                                    <span class="detail-icon">⌁</span>
+
+                                    <div>
+                                        <span>Signal Quality</span>
+
+                                        <strong data-wifi="signal-percent">
+                                            --%
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+
+                                <!-- FREQUENCY -->
+                                <div class="detail-item">
+
+                                    <span class="detail-icon">◌</span>
+
+                                    <div>
+                                        <span>Frequency</span>
+
+                                        <strong data-wifi="band">
+                                            --
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+
+                                <!-- CHANNEL -->
+                                <div class="detail-item">
+
+                                    <span class="detail-icon">◉</span>
+
+                                    <div>
+                                        <span>Channel</span>
+
+                                        <strong data-wifi="channel">
+                                            --
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+
+                                <!-- LOCATION -->
+                                <div class="detail-item">
+
+                                    <span class="detail-icon">⌖</span>
+
+                                    <div>
+                                        <span>Current Location</span>
+
+                                        <strong id="currentLocation">
+                                            Waiting...
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+
+                                <!-- LAST MEASUREMENT -->
+                                <div class="detail-item">
+
+                                    <span class="detail-icon">◷</span>
+
+                                    <div>
+                                        <span>Last Measurement</span>
+
+                                        <strong>
+                                            Live
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+
+                    <!-- ================================================= -->
+                    <!-- HEAT MAP -->
+                    <!-- ================================================= -->
+
+                    <section
+                        class="panel wide-panel"
+                        id="heatmap"
+                    >
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <span class="section-kicker">
+                                    SPATIAL ANALYSIS
+                                </span>
+
+                                <h2>
+                                    Wi-Fi Signal Heat Map
+                                </h2>
+
+                                <p class="panel-subtitle">
+                                    Real RSSI distribution across the monitored floor area
+                                </p>
+
+                            </div>
+
+                            <span class="panel-tag">
+                                GRID VIEW
+                            </span>
+
+                        </div>
+
+
+                        <div class="heatmap-layout">
+
+
+                            <!-- HEATMAP -->
+                            <div class="heatmap-container">
+
+
+                                <div class="heatmap-top-labels">
+
+                                    <span></span>
+
+                                    <span>A</span>
+                                    <span>B</span>
+                                    <span>C</span>
+                                    <span>D</span>
+                                    <span>E</span>
+                                    <span>F</span>
+                                    <span>G</span>
+                                    <span>H</span>
+
+                                </div>
+
+
+                                <div class="heatmap-body">
+
+
+                                    <div class="heatmap-side-labels">
+
+                                        <span>1</span>
+                                        <span>2</span>
+                                        <span>3</span>
+                                        <span>4</span>
+                                        <span>5</span>
+
+                                    </div>
+
+
+                                    <div
+                                        class="heatmap-grid"
+                                        id="heatmapGrid"
+                                    >
+                                    </div>
+
+                                </div>
+
+
+                                <div class="heatmap-location-marker">
+
+                                    <span class="location-marker-dot"></span>
+
+                                    Current measurement:
+                                    <span id="heatmapCurrentLocation">
+                                        Waiting...
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+
+                            <!-- HEATMAP LEGEND -->
+                            <div class="heatmap-side-panel">
+
+                                <h3>
+                                    Signal Strength
+                                </h3>
+
+                                <p>
+                                    RSSI value distribution
+                                </p>
+
+
+                                <div class="legend-list">
+
+
+                                    <div class="legend-item">
+
+                                        <span
+                                            class="legend-color excellent-color"
+                                        ></span>
+
+                                        <span>Excellent</span>
+
+                                        <strong>
+                                            -50 to -59 dBm
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div class="legend-item">
+
+                                        <span
+                                            class="legend-color good-color"
+                                        ></span>
+
+                                        <span>Good</span>
+
+                                        <strong>
+                                            -60 to -66 dBm
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div class="legend-item">
+
+                                        <span
+                                            class="legend-color fair-color"
+                                        ></span>
+
+                                        <span>Fair</span>
+
+                                        <strong>
+                                            -67 to -74 dBm
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div class="legend-item">
+
+                                        <span
+                                            class="legend-color poor-color"
+                                        ></span>
+
+                                        <span>Poor</span>
+
+                                        <strong>
+                                            -75 to -79 dBm
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div class="legend-item">
+
+                                        <span
+                                            class="legend-color weak-color"
+                                        ></span>
+
+                                        <span>Weak</span>
+
+                                        <strong>
+                                            -80 dBm or lower
+                                        </strong>
+
+                                    </div>
+
+                                </div>
+
+
+                                <!-- HEATMAP SUMMARY -->
+                                <div class="heatmap-summary">
+
+                                    <div>
+
+                                        <span>
+                                            Average RSSI
+                                        </span>
+
+                                        <strong id="averageRSSI">
+                                            -- dBm
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div>
+
+                                        <span>
+                                            Weak zones
+                                        </span>
+
+                                        <strong
+                                            class="orange-text"
+                                            id="weakZones"
+                                        >
+                                            0 detected
+                                        </strong>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+
+                    <!-- ================================================= -->
+                    <!-- AI RECOMMENDATION -->
+                    <!-- ================================================= -->
+
+                    <section
+                        class="panel"
+                        id="recommendation"
+                    >
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <span class="section-kicker">
+                                    INTELLIGENT ANALYSIS
+                                </span>
+
+                                <h2>
+                                    AI Recommendation
+                                </h2>
+
+                            </div>
+
+                            <span class="ai-status">
+                                AI READY
+                            </span>
+
+                        </div>
+
+
+                        <div class="recommendation-card">
+
+                            <div class="recommendation-icon">
+                                ✦
+                            </div>
+
+
+                            <div>
+
+                                <span class="recommendation-label">
+                                    OPTIMAL PLACEMENT SUGGESTION
+                                </span>
+
+                                <h3 id="aiRecommendation">
+                                    Waiting for measurement data...
+                                </h3>
+
+                                <p id="aiRecommendationText">
+                                    The system will analyze the real Wi-Fi measurements.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="recommendation-points">
+
+
+                            <div>
+
+                                <span class="check-icon">
+                                    ✓
+                                </span>
+
+                                <span>
+                                    Expected weak-zone reduction:
+
+                                    <strong id="weakReduction">
+                                        Calculating...
+                                    </strong>
+                                </span>
+
+                            </div>
+
+
+                            <div>
+
+                                <span class="check-icon">
+                                    ✓
+                                </span>
+
+                                <span>
+                                    Estimated average RSSI improvement:
+
+                                    <strong id="rssiImprovement">
+                                        Calculating...
+                                    </strong>
+                                </span>
+
+                            </div>
+
+
+                            <div>
+
+                                <span class="check-icon">
+                                    ✓
+                                </span>
+
+                                <span>
+                                    Recommended location:
+
+                                    <strong id="recommendedLocation">
+                                        Calculating...
+                                    </strong>
+                                </span>
+
+                            </div>
+
+
+                        </div>
+
+
+                        <button class="secondary-button">
+                            View Placement Analysis
+                            <span>→</span>
+                        </button>
+
+                    </section>
+
+
+
+                    <!-- ================================================= -->
+                    <!-- COVERAGE SUMMARY -->
+                    <!-- ================================================= -->
+
+                    <section
+                        class="panel"
+                        id="coverage"
+                    >
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <span class="section-kicker">
+                                    COVERAGE QUALITY
+                                </span>
+
+                                <h2>
+                                    Coverage Summary
+                                </h2>
+
+                            </div>
+
+                            <span
+                                class="panel-tag"
+                                id="measurementPoints"
+                            >
+                                0 POINTS
+                            </span>
+
+                        </div>
+
+
+                        <div class="coverage-score">
+
+                            <div class="score-circle">
+
+                                <strong id="coveragePercent">
+                                    0%
+                                </strong>
+
+                                <span>
+                                    covered
+                                </span>
+
+                            </div>
+
+
+                            <div>
+
+                                <h3>
+                                    Coverage analysis
+                                </h3>
+
+                                <p>
+                                    Coverage is calculated from the collected
+                                    Wi-Fi measurements.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- IMPORTANT:
+                             script.js expects exactly five
+                             .coverage-row elements. -->
+                        <div class="coverage-bars">
+
+
+                            <!-- EXCELLENT -->
+                            <div class="coverage-row">
+
+                                <div>
+
+                                    <span>
+                                        <i class="bar-dot excellent-color"></i>
+                                        Excellent
+                                    </span>
+
+                                    <strong>
+                                        0%
+                                    </strong>
+
+                                </div>
+
+                                <div class="progress-track">
+
+                                    <div
+                                        class="progress-bar excellent-bg"
+                                        style="width: 0%;"
+                                    ></div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- GOOD -->
+                            <div class="coverage-row">
+
+                                <div>
+
+                                    <span>
+                                        <i class="bar-dot good-color"></i>
+                                        Good
+                                    </span>
+
+                                    <strong>
+                                        0%
+                                    </strong>
+
+                                </div>
+
+                                <div class="progress-track">
+
+                                    <div
+                                        class="progress-bar good-bg"
+                                        style="width: 0%;"
+                                    ></div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- FAIR -->
+                            <div class="coverage-row">
+
+                                <div>
+
+                                    <span>
+                                        <i class="bar-dot fair-color"></i>
+                                        Fair
+                                    </span>
+
+                                    <strong>
+                                        0%
+                                    </strong>
+
+                                </div>
+
+                                <div class="progress-track">
+
+                                    <div
+                                        class="progress-bar fair-bg"
+                                        style="width: 0%;"
+                                    ></div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- POOR -->
+                            <div class="coverage-row">
+
+                                <div>
+
+                                    <span>
+                                        <i class="bar-dot poor-color"></i>
+                                        Poor
+                                    </span>
+
+                                    <strong>
+                                        0%
+                                    </strong>
+
+                                </div>
+
+                                <div class="progress-track">
+
+                                    <div
+                                        class="progress-bar poor-bg"
+                                        style="width: 0%;"
+                                    ></div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- WEAK -->
+                            <div class="coverage-row">
+
+                                <div>
+
+                                    <span>
+                                        <i class="bar-dot weak-color"></i>
+                                        Weak
+                                    </span>
+
+                                    <strong>
+                                        0%
+                                    </strong>
+
+                                </div>
+
+                                <div class="progress-track">
+
+                                    <div
+                                        class="progress-bar weak-bg"
+                                        style="width: 0%;"
+                                    ></div>
+
+                                </div>
+
+                            </div>
+
+
+                        </div>
+
+                    </section>
+
+
+
+                    <!-- ================================================= -->
+                    <!-- RSSI HISTORY -->
+                    <!-- ================================================= -->
+
+                    <section
+                        class="panel wide-panel"
+                        id="history"
+                    >
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <span class="section-kicker">
+                                    TIME SERIES
+                                </span>
+
+                                <h2>
+                                    RSSI History Graph
+                                </h2>
+
+                                <p class="panel-subtitle">
+                                    Real signal strength readings from recent measurements
+                                </p>
+
+                            </div>
+
+
+                            <div class="chart-period">
+
+                                <button class="period-button active">
+                                    12 Points
+                                </button>
+
+                                <button class="period-button">
+                                    Today
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="chart-wrapper">
+
+                            <canvas id="rssiChart"></canvas>
+
+                        </div>
+
+                    </section>
+
+
+
+                    <!-- ================================================= -->
+                    <!-- WEAK ZONE DETECTION -->
+                    <!-- ================================================= -->
+
+                    <section
+                        class="panel"
+                        id="weak-zones"
+                    >
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <span class="section-kicker">
+                                    ALERT ANALYSIS
+                                </span>
+
+                                <h2>
+                                    Weak Zone Detection
+                                </h2>
+
+                            </div>
+
+
+                            <span
+                                class="alert-count"
+                                id="weakZoneAlertCount"
+                            >
+                                0 ALERTS
+                            </span>
+
+                        </div>
+
+
+                        <!-- script.js dynamically inserts weak zones here -->
+                        <div
+                            class="weak-zone-list"
+                            id="weakZoneList"
+                        >
+                        </div>
+
+
+                        <button class="text-button">
+
+                            View all weak zones
+
+                            <span>
+                                →
+                            </span>
+
+                        </button>
+
+                    </section>
+
+
+
+                    <!-- ================================================= -->
+                    <!-- DEVICE / SYSTEM STATUS -->
+                    <!-- ================================================= -->
+
+                    <section
+                        class="panel"
+                        id="system-status"
+                    >
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <span class="section-kicker">
+                                    SYSTEM MONITORING
+                                </span>
+
+                                <h2>
+                                    Device/System Status
+                                </h2>
+
+                            </div>
+
+
+                            <span class="status-pill connected">
+                                SYSTEM ONLINE
+                            </span>
+
+                        </div>
+
+
+                        <div class="device-list">
+
+
+                            <!-- LAPTOP WIFI -->
+                            <div class="device-item">
+
+                                <div class="device-icon green-device">
+                                    ◉
+                                </div>
+
+                                <div class="device-info">
+
+                                    <h3>
+                                        Laptop Wi-Fi Adapter
+                                    </h3>
+
+                                    <p>
+                                        Real-time Wi-Fi signal source
+                                    </p>
+
+                                </div>
+
+                                <div class="device-state">
+
+                                    <span class="online-dot"></span>
+
+                                    Online
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- WIFI NETWORK -->
+                            <div class="device-item">
+
+                                <div class="device-icon blue-device">
+                                    ⌁
+                                </div>
+
+                                <div class="device-info">
+
+                                    <h3>
+                                        Connected Wi-Fi Network
+                                    </h3>
+
+                                    <p>
+                                        Current SSID gateway
+                                    </p>
+
+                                </div>
+
+                                <div class="device-state">
+
+                                    <span class="online-dot"></span>
+
+                                    Online
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- DASHBOARD -->
+                            <div class="device-item">
+
+                                <div class="device-icon purple-device">
+                                    ◫
+                                </div>
+
+                                <div class="device-info">
+
+                                    <h3>
+                                        Monitoring Dashboard
+                                    </h3>
+
+                                    <p>
+                                        Live dashboard interface
+                                    </p>
+
+                                </div>
+
+                                <div class="device-state">
+
+                                    <span class="online-dot"></span>
+
+                                    Active
+
+                                </div>
+
+                            </div>
+
+
+                        </div>
+
+
+                        <div class="system-footer">
+
+                            <span>
+                                Last system sync
+                            </span>
+
+                            <strong>
+                                Live
+                            </strong>
+
+                        </div>
+
+                    </section>
+
+
+
+                    <!-- ================================================= -->
+                    <!-- RECENT MEASUREMENTS -->
+                    <!-- ================================================= -->
+
+                    <section
+                        class="panel wide-panel"
+                        id="measurements"
+                    >
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <span class="section-kicker">
+                                    DATA LOG
+                                </span>
+
+                                <h2>
+                                    Recent Measurements
+                                </h2>
+
+                                <p class="panel-subtitle">
+                                    Latest readings collected from the monitored area
+                                </p>
+
+                            </div>
+
+
+                            <button class="outline-button">
+                                Export Data
+                            </button>
+
+                        </div>
+
+
+                        <div class="table-wrapper">
+
+                            <table class="measurements-table">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>
+                                            Measurement ID
+                                        </th>
+
+                                        <th>
+                                            Location
+                                        </th>
+
+                                        <th>
+                                            RSSI
+                                        </th>
+
+                                        <th>
+                                            Quality
+                                        </th>
+
+                                        <th>
+                                            SSID
+                                        </th>
+
+                                        <th>
+                                            Time
+                                        </th>
+
+                                        <th>
+                                            Status
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody id="measurementsBody">
+
+                                    <tr>
+
+                                        <td
+                                            colspan="7"
+                                            style="text-align: center;"
+                                        >
+                                            Loading real measurements...
+                                        </td>
+
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </section>
+
+
+                </div>
+
+
+                <!-- ================= FOOTER ================= -->
+
+                <footer class="dashboard-footer">
+
+                    <span>
+                        AI-Based Wi-Fi Signal Mapping and
+                        Intelligent Router Placement System
+                    </span>
+
+                    <span>
+                        Live Dashboard Version 1.0
+                    </span>
+
+                </footer>
+
+
+            </main>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= SCRIPTS ================= -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="script.js"></script>
+<script>
+/* ==========================================================
+   SIDEBAR PAGE/VIEW NAVIGATION
+   Keeps all existing dashboard sections and JavaScript intact.
+   Only controls which existing section is visible.
+   ========================================================== */
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const navItems = document.querySelectorAll(".sidebar .nav-item");
+
+    const statsGrid = document.querySelector(".stats-grid");
+
+    const sections = {
+
+    dashboard: [],
+
+    wifi: [
+        "current-wifi"
+    ],
+
+    heatmap: [
+        "heatmap"
+    ],
+
+    recommendation: [
+        "recommendation",
+        "coverage"
+    ],
+
+    history: [
+        "history"
+    ],
+
+    weakzones: [
+        "weak-zones"
+    ],
+
+    measurements: [
+        "measurements"
+    ],
+
+    status: [
+        "system-status"
+    ]
+
+};
+    function hideAllSections() {
+
+        Object.keys(sections).forEach(function (view) {
+
+            sections[view].forEach(function (sectionId) {
+
+                const section = document.getElementById(sectionId);
+
+                if (section) {
+                    section.style.display = "none";
+                }
+
+            });
+
+        });
+
+        if (statsGrid) {
+            statsGrid.style.display = "none";
+        }
+    }
+
+
+   function showView(viewName) {
+
+    const allSections = [
+        "current-wifi",
+        "heatmap",
+        "recommendation",
+        "coverage",
+        "history",
+        "weak-zones",
+        "system-status",
+        "measurements"
+    ];
+
+    /* Hide every detailed section */
+    allSections.forEach(function (sectionId) {
+
+        const section = document.getElementById(sectionId);
+
+        if (section) {
+            section.style.display = "none";
+        }
+
+    });
+
+
+    /* =====================================================
+       DASHBOARD
+       ===================================================== */
+
+    if (viewName === "dashboard") {
+
+        if (statsGrid) {
+            statsGrid.style.display = "grid";
+        }
+
+    }
+
+
+    /* =====================================================
+       WI-FI INFORMATION
+       ===================================================== */
+
+    else if (viewName === "wifi") {
+
+        if (statsGrid) {
+            statsGrid.style.display = "none";
+        }
+
+        const section = document.getElementById("current-wifi");
+
+        if (section) {
+            section.style.display = "";
+        }
+
+    }
+
+
+    /* =====================================================
+       SIGNAL HEAT MAP
+       ===================================================== */
+
+    else if (viewName === "heatmap") {
+
+        if (statsGrid) {
+            statsGrid.style.display = "none";
+        }
+
+        const section = document.getElementById("heatmap");
+
+        if (section) {
+            section.style.display = "";
+        }
+
+    }
+
+
+    /* =====================================================
+       AI RECOMMENDATION
+       ===================================================== */
+
+    else if (viewName === "recommendation") {
+
+        if (statsGrid) {
+            statsGrid.style.display = "none";
+        }
+
+        const aiSection = document.getElementById("recommendation");
+        const coverageSection = document.getElementById("coverage");
+
+        if (aiSection) {
+            aiSection.style.display = "";
+        }
+
+        if (coverageSection) {
+            coverageSection.style.display = "";
+        }
+
+    }
+
+
+    /* =====================================================
+       RSSI HISTORY
+       ===================================================== */
+
+    else if (viewName === "history") {
+
+        if (statsGrid) {
+            statsGrid.style.display = "none";
+        }
+
+        const section = document.getElementById("history");
+
+        if (section) {
+            section.style.display = "";
+        }
+
+    }
+
+
+    /* =====================================================
+       WEAK ZONE DETECTION
+       ===================================================== */
+
+    else if (viewName === "weakzones") {
+
+        if (statsGrid) {
+            statsGrid.style.display = "none";
+        }
+
+        const section = document.getElementById("weak-zones");
+
+        if (section) {
+            section.style.display = "";
+        }
+
+    }
+
+
+    /* =====================================================
+       MEASUREMENTS
+       ===================================================== */
+
+    else if (viewName === "measurements") {
+
+        if (statsGrid) {
+            statsGrid.style.display = "none";
+        }
+
+        const section = document.getElementById("measurements");
+
+        if (section) {
+            section.style.display = "";
+        }
+
+    }
+
+
+    /* =====================================================
+       DEVICE STATUS
+       ===================================================== */
+
+    else if (viewName === "status") {
+
+        if (statsGrid) {
+            statsGrid.style.display = "none";
+        }
+
+        const section = document.getElementById("system-status");
+
+        if (section) {
+            section.style.display = "";
+        }
+
+    }
+
+
+    /* Always return to the top */
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+
+}
+    function activateNav(clickedItem) {
+
+        navItems.forEach(function (item) {
+            item.classList.remove("active");
+        });
+
+        clickedItem.classList.add("active");
+    }
+
+
+    navItems.forEach(function (item) {
+
+        item.addEventListener("click", function (event) {
+
+            event.preventDefault();
+
+            const text = item
+                .querySelector("span:last-child")
+                ?.textContent
+                .trim();
+
+            activateNav(item);
+
+
+           if (text === "Dashboard") {
+
+    showView("dashboard");
+
+} else if (text === "Wi-Fi Information") {
+
+    showView("wifi");
+
+} else if (text === "Signal Heat Map") {
+
+    showView("heatmap");
+
+} else if (text === "AI Recommendation") {
+
+    showView("recommendation");
+
+} else if (text === "RSSI History") {
+
+    showView("history");
+
+} else if (text === "Weak Zone Detection") {
+
+    showView("weakzones");
+
+} else if (text === "Measurements") {
+
+    showView("measurements");
+
+} else if (text === "Device Status") {
+
+    showView("status");
+
+}
+        });
+
+    });
+
+
+    /* Start with Dashboard view */
+    const dashboardNav = Array.from(navItems).find(function (item) {
+
+        return item
+            .querySelector("span:last-child")
+            ?.textContent
+            .trim() === "Dashboard";
+
+    });
+
+    if (dashboardNav) {
+        dashboardNav.classList.add("active");
+    }
+
+    showView("dashboard");
+
+});
+</script>
+
+</body>
+</html>

@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, request, send_from_directory
 import sqlite3
+import subprocess
+import re
 from datetime import datetime
 
 
@@ -28,7 +30,7 @@ WIFI_LOCATIONS = {
 
 
 # =========================================================
-# DATABASE CONNECTION
+# DATABASE
 # =========================================================
 
 def get_connection():
@@ -41,10 +43,6 @@ def get_connection():
 
     return connection
 
-
-# =========================================================
-# INITIALIZE DATABASE
-# =========================================================
 
 def init_database():
 
@@ -68,6 +66,181 @@ def init_database():
     connection.commit()
 
     connection.close()
+
+
+# =========================================================
+# READ LAPTOP WIFI
+# =========================================================
+
+def get_wifi_info():
+
+    try:
+
+        output = subprocess.check_output(
+            [
+                "netsh",
+                "wlan",
+                "show",
+                "interfaces"
+            ],
+            text=True,
+            encoding="utf-8",
+            errors="ignore"
+        )
+
+        # -------------------------------------------------
+        # SSID
+        # -------------------------------------------------
+
+        ssid_match = re.search(
+            r"^\s*SSID\s*:\s*(.+)$",
+            output,
+            re.MULTILINE
+        )
+
+        # -------------------------------------------------
+        # SIGNAL
+        # -------------------------------------------------
+
+        signal_match = re.search(
+            r"Signal\s*:\s*(\d+)\s*%",
+            output,
+            re.IGNORECASE
+        )
+
+        # -------------------------------------------------
+        # RSSI
+        # -------------------------------------------------
+
+        rssi_match = re.search(
+            r"^\s*Rssi\s*:\s*(-?\d+)$",
+            output,
+            re.MULTILINE | re.IGNORECASE
+        )
+
+        # -------------------------------------------------
+        # BAND
+        # -------------------------------------------------
+
+        band_match = re.search(
+            r"^\s*Band\s*:\s*(.+)$",
+            output,
+            re.MULTILINE
+        )
+
+        # -------------------------------------------------
+        # CHANNEL
+        # -------------------------------------------------
+
+        channel_match = re.search(
+            r"^\s*Channel\s*:\s*(.+)$",
+            output,
+            re.MULTILINE
+        )
+
+        # -------------------------------------------------
+        # EXTRACT VALUES
+        # -------------------------------------------------
+
+        ssid = (
+            ssid_match.group(1).strip()
+            if ssid_match
+            else "Unknown"
+        )
+
+        signal = (
+            int(signal_match.group(1))
+            if signal_match
+            else 0
+        )
+
+        # -------------------------------------------------
+        # RSSI CALCULATION
+        # -------------------------------------------------
+        #
+        # Some Windows Wi-Fi adapters report a stale/fixed
+        # Rssi value. Your adapter was repeatedly reporting
+        # -56 dBm even when the Signal percentage changed.
+        #
+        # Therefore we use the live Signal percentage and
+        # convert it to an approximate dBm value.
+        #
+        # Approximation:
+        # RSSI ≈ (Signal % / 2) - 100
+        #
+        # Examples:
+        # 84% -> -58 dBm
+        # 70% -> -65 dBm
+        # 60% -> -70 dBm
+        # 50% -> -75 dBm
+        # 40% -> -80 dBm
+        #
+        # This is an estimated RSSI based on Windows Signal %,
+        # not a direct hardware RSSI measurement.
+        # -------------------------------------------------
+
+        if signal_match:
+
+            rssi = round(
+                (signal / 2) - 100,
+                1
+            )
+
+        elif rssi_match:
+
+            rssi = float(
+                rssi_match.group(1)
+            )
+
+        else:
+
+            rssi = 0
+
+        # -------------------------------------------------
+        # BAND
+        # -------------------------------------------------
+
+        band = (
+            band_match.group(1).strip()
+            if band_match
+            else "Unknown"
+        )
+
+        # -------------------------------------------------
+        # CHANNEL
+        # -------------------------------------------------
+
+        channel = (
+            channel_match.group(1).strip()
+            if channel_match
+            else "Unknown"
+        )
+
+        # -------------------------------------------------
+        # RETURN WIFI INFORMATION
+        # -------------------------------------------------
+
+        return {
+
+            "ssid": ssid,
+
+            "signal_percent": signal,
+
+            "rssi": rssi,
+
+            "band": band,
+
+            "channel": channel
+
+        }
+
+    except Exception as error:
+
+        return {
+
+            "error": str(error)
+
+        }
 
 
 # =========================================================
@@ -120,146 +293,28 @@ def script():
 
 
 # =========================================================
-# WIFI API
-# =========================================================
-#
-# IMPORTANT:
-# The Render server cannot directly read your laptop Wi-Fi.
-#
-# Therefore this endpoint returns the LATEST Wi-Fi
-# measurement sent by your laptop through auto_measure.py.
+# LAPTOP WIFI API
 # =========================================================
 
-@app.route("/api/wifi", methods=["GET"])
+@app.route(
+    "/api/wifi",
+    methods=["GET"]
+)
 def wifi():
 
-    connection = get_connection()
+    wifi_info = get_wifi_info()
 
-    cursor = connection.cursor()
-
-    cursor.execute("""
-        SELECT *
-        FROM measurements
-        ORDER BY id DESC
-        LIMIT 1
-    """)
-
-    row = cursor.fetchone()
-
-    connection.close()
-
-    if row is None:
-
-        return jsonify({
-            "status": "error",
-            "message": "No Wi-Fi measurement available yet"
-        })
-
-    return jsonify({
-
-        "status": "success",
-
-        "ssid": row["ssid"],
-
-        "signal_percent":
-            row["signal_percent"],
-
-        "rssi":
-            row["rssi"],
-
-        "band":
-            row["band"],
-
-        "channel":
-            row["channel"],
-
-        "location":
-            row["location"],
-
-        "timestamp":
-            row["timestamp"]
-
-    })
+    return jsonify(
+        wifi_info
+    )
 
 
 # =========================================================
-# LATEST MEASUREMENT API
+# SAVE CURRENT LAPTOP WIFI MEASUREMENT
 # =========================================================
 
-@app.route("/api/latest", methods=["GET"])
-def latest():
-
-    connection = get_connection()
-
-    cursor = connection.cursor()
-
-    cursor.execute("""
-        SELECT *
-        FROM measurements
-        ORDER BY id DESC
-        LIMIT 1
-    """)
-
-    row = cursor.fetchone()
-
-    connection.close()
-
-    if row is None:
-
-        return jsonify({
-            "status": "error",
-            "message": "No measurements available"
-        }), 404
-
-    return jsonify({
-
-        "status": "success",
-
-        "data": {
-
-            "id":
-                row["id"],
-
-            "rssi":
-                row["rssi"],
-
-            "location":
-                row["location"],
-
-            "ssid":
-                row["ssid"],
-
-            "signal_percent":
-                row["signal_percent"],
-
-            "band":
-                row["band"],
-
-            "channel":
-                row["channel"],
-
-            "timestamp":
-                row["timestamp"]
-
-        }
-
-    })
-
-
 # =========================================================
-# RECEIVE WIFI MEASUREMENT FROM LAPTOP
-# =========================================================
-#
-# The laptop runs auto_measure.py.
-#
-# auto_measure.py reads:
-#   SSID
-#   Signal %
-#   RSSI
-#   Band
-#   Channel
-#
-# Then it sends these values to this API.
+# SAVE CURRENT LAPTOP WIFI MEASUREMENT
 # =========================================================
 
 @app.route(
@@ -269,7 +324,7 @@ def latest():
 def measure():
 
     # -----------------------------------------------------
-    # READ JSON DATA SENT BY LAPTOP
+    # Read Wi-Fi information sent by auto_measure.py
     # -----------------------------------------------------
 
     data = request.get_json(
@@ -278,94 +333,74 @@ def measure():
 
 
     # -----------------------------------------------------
-    # GET WIFI VALUES
+    # Get real laptop Wi-Fi values
     # -----------------------------------------------------
 
-    ssid = data.get(
-        "ssid",
-        "Unknown"
-    )
+    ssid = str(
+        data.get(
+            "ssid",
+            "Unknown"
+        )
+    ).strip()
+
 
     signal_percent = data.get(
         "signal_percent",
         0
     )
 
+
     rssi = data.get(
         "rssi",
         0
     )
 
-    band = data.get(
-        "band",
-        "Unknown"
+
+    band = str(
+        data.get(
+            "band",
+            "Unknown"
+        )
     )
 
-    channel = data.get(
-        "channel",
-        "Unknown"
+
+    channel = str(
+        data.get(
+            "channel",
+            "Unknown"
+        )
     )
 
-
-    # -----------------------------------------------------
-    # GET MEASUREMENT POINT
-    # -----------------------------------------------------
-
-    measurement_point = data.get(
-        "measurement_point",
-        "Unknown Point"
-    )
 
     measurement_point = str(
-        measurement_point
+        data.get(
+            "measurement_point",
+            "Unknown Point"
+        )
     ).strip().upper()
 
 
     # -----------------------------------------------------
-    # CLEAN WIFI VALUES
+    # Validate measurement point
     # -----------------------------------------------------
 
-    ssid = str(
-        ssid
-    ).strip()
+    if not re.fullmatch(
+        r"[A-H][1-5]",
+        measurement_point
+    ):
 
-    band = str(
-        band
-    ).strip()
+        return jsonify({
 
-    channel = str(
-        channel
-    ).strip()
+            "status": "error",
 
+            "message":
+                "Invalid measurement point. Use A1 to H5."
 
-    # -----------------------------------------------------
-    # CONVERT NUMERIC VALUES
-    # -----------------------------------------------------
-
-    try:
-
-        signal_percent = float(
-            signal_percent
-        )
-
-    except:
-
-        signal_percent = 0
-
-
-    try:
-
-        rssi = float(
-            rssi
-        )
-
-    except:
-
-        rssi = 0
+        }), 400
 
 
     # -----------------------------------------------------
-    # AUTOMATIC LOCATION DETECTION
+    # Detect location from SSID
     # -----------------------------------------------------
 
     location = WIFI_LOCATIONS.get(
@@ -375,12 +410,8 @@ def measure():
 
 
     # -----------------------------------------------------
-    # CREATE COMPLETE LOCATION
-    # -----------------------------------------------------
-    #
-    # Example:
-    # Hostel - B3
-    #
+    # Complete location
+    # Example: Hostel - B5
     # -----------------------------------------------------
 
     full_location = (
@@ -391,7 +422,7 @@ def measure():
 
 
     # -----------------------------------------------------
-    # TIMESTAMP
+    # Timestamp
     # -----------------------------------------------------
 
     timestamp = datetime.now().strftime(
@@ -400,12 +431,13 @@ def measure():
 
 
     # -----------------------------------------------------
-    # SAVE DATA INTO DATABASE
+    # Save measurement
     # -----------------------------------------------------
 
     connection = get_connection()
 
     cursor = connection.cursor()
+
 
     cursor.execute("""
         INSERT INTO measurements
@@ -440,22 +472,22 @@ def measure():
 
     measurement_id = cursor.lastrowid
 
+
     connection.commit()
 
     connection.close()
 
 
     # -----------------------------------------------------
-    # RETURN SUCCESS RESPONSE
+    # Return successful result
     # -----------------------------------------------------
 
     return jsonify({
 
-        "status":
-            "success",
+        "status": "success",
 
         "message":
-            "Wi-Fi measurement received and stored",
+            "Wi-Fi measurement stored successfully",
 
         "data": {
 
@@ -489,10 +521,8 @@ def measure():
         }
 
     })
-
-
 # =========================================================
-# GET ALL WIFI DATA
+# GET ALL DATA
 # =========================================================
 
 @app.route("/api/data")
@@ -502,11 +532,13 @@ def get_data():
 
     cursor = connection.cursor()
 
+
     cursor.execute("""
         SELECT *
         FROM measurements
         ORDER BY id ASC
     """)
+
 
     rows = cursor.fetchall()
 
@@ -563,33 +595,23 @@ def analyze():
 
     cursor = connection.cursor()
 
+
     cursor.execute("""
-        SELECT
-            rssi,
-            location,
-            ssid,
-            signal_percent,
-            band,
-            channel,
-            timestamp
+        SELECT rssi, location
         FROM measurements
     """)
+
 
     rows = cursor.fetchall()
 
     connection.close()
 
 
-    # -----------------------------------------------------
-    # NO DATA
-    # -----------------------------------------------------
-
     if not rows:
 
         return jsonify({
 
-            "status":
-                "error",
+            "status": "error",
 
             "message":
                 "No measurements available"
@@ -616,21 +638,14 @@ def analyze():
 
     average_rssi = (
 
-        sum(rssis)
-        /
+        sum(rssis) /
         len(rssis)
 
     )
 
 
     # -----------------------------------------------------
-    # BEST LOCATION
-    # -----------------------------------------------------
-    #
-    # Higher RSSI is stronger.
-    #
-    # Example:
-    # -50 dBm is stronger than -80 dBm.
+    # BEST MEASURED LOCATION
     # -----------------------------------------------------
 
     best = max(

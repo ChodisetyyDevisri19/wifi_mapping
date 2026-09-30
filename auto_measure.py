@@ -3,13 +3,14 @@ import urllib.error
 import json
 import time
 import re
+import subprocess
 
 
 # =========================================================
-# FLASK SERVER
+# RENDER SERVER
 # =========================================================
 
-API_BASE = "http://127.0.0.1:5000"
+API_BASE = "https://wifi-mapping.onrender.com"
 
 
 # =========================================================
@@ -21,9 +22,8 @@ WIFI_LOCATIONS = {
     # Your current Hostel Wi-Fi
     "ACT-ai_101818820927": "Hostel",
 
-    # Add your college Wi-Fi SSID here later
-    # Example:
-    # "IARE_WIFI_NAME": "College"
+    # Add your college Wi-Fi later:
+    # "YOUR_COLLEGE_WIFI": "College"
 
 }
 
@@ -43,35 +43,250 @@ def valid_grid_point(point):
 
 
 # =========================================================
-# GET REAL WIFI INFORMATION
+# GET REAL WIFI INFORMATION FROM THIS LAPTOP
 # =========================================================
 
-def get_wifi():
+def get_local_wifi():
 
     try:
 
-        response = urllib.request.urlopen(
-            API_BASE + "/api/wifi",
-            timeout=5
+        # -------------------------------------------------
+        # Windows Wi-Fi command
+        # -------------------------------------------------
+
+        output = subprocess.check_output(
+
+            [
+                "netsh",
+                "wlan",
+                "show",
+                "interfaces"
+            ],
+
+            text=True,
+
+            encoding="utf-8",
+
+            errors="ignore"
+
         )
 
-        data = response.read().decode()
 
-        wifi = json.loads(data)
+        # -------------------------------------------------
+        # SSID
+        # -------------------------------------------------
 
-        return wifi
+        ssid_match = re.search(
+
+            r"^\s*SSID\s*:\s*(.+)$",
+
+            output,
+
+            re.MULTILINE
+
+        )
+
+
+        # -------------------------------------------------
+        # SIGNAL %
+        # -------------------------------------------------
+
+        signal_match = re.search(
+
+            r"Signal\s*:\s*(\d+)\s*%",
+
+            output,
+
+            re.IGNORECASE
+
+        )
+
+
+        # -------------------------------------------------
+        # RSSI
+        # -------------------------------------------------
+
+        rssi_match = re.search(
+
+            r"^\s*Rssi\s*:\s*(-?\d+)$",
+
+            output,
+
+            re.MULTILINE | re.IGNORECASE
+
+        )
+
+
+        # -------------------------------------------------
+        # BAND
+        # -------------------------------------------------
+
+        band_match = re.search(
+
+            r"^\s*Band\s*:\s*(.+)$",
+
+            output,
+
+            re.MULTILINE
+
+        )
+
+
+        # -------------------------------------------------
+        # CHANNEL
+        # -------------------------------------------------
+
+        channel_match = re.search(
+
+            r"^\s*Channel\s*:\s*(.+)$",
+
+            output,
+
+            re.MULTILINE
+
+        )
+
+
+        # -------------------------------------------------
+        # EXTRACT SSID
+        # -------------------------------------------------
+
+        ssid = (
+
+            ssid_match.group(1).strip()
+
+            if ssid_match
+
+            else "Unknown"
+
+        )
+
+
+        # -------------------------------------------------
+        # EXTRACT SIGNAL
+        # -------------------------------------------------
+
+        signal = (
+
+            int(signal_match.group(1))
+
+            if signal_match
+
+            else 0
+
+        )
+
+
+        # -------------------------------------------------
+        # RSSI
+        # -------------------------------------------------
+
+        # Windows Signal % is used to estimate RSSI.
+        #
+        # Approximation:
+        #
+        # RSSI ≈ (Signal % / 2) - 100
+        #
+        # Example:
+        # 80% -> -60 dBm
+        # 60% -> -70 dBm
+        # 40% -> -80 dBm
+
+        if signal_match:
+
+            rssi = round(
+
+                (signal / 2) - 100,
+
+                1
+
+            )
+
+        elif rssi_match:
+
+            rssi = float(
+
+                rssi_match.group(1)
+
+            )
+
+        else:
+
+            rssi = 0
+
+
+        # -------------------------------------------------
+        # BAND
+        # -------------------------------------------------
+
+        band = (
+
+            band_match.group(1).strip()
+
+            if band_match
+
+            else "Unknown"
+
+        )
+
+
+        # -------------------------------------------------
+        # CHANNEL
+        # -------------------------------------------------
+
+        channel = (
+
+            channel_match.group(1).strip()
+
+            if channel_match
+
+            else "Unknown"
+
+        )
+
+
+        # -------------------------------------------------
+        # RETURN WIFI DATA
+        # -------------------------------------------------
+
+        return {
+
+            "ssid":
+                ssid,
+
+            "signal_percent":
+                signal,
+
+            "rssi":
+                rssi,
+
+            "band":
+                band,
+
+            "channel":
+                channel
+
+        }
+
 
     except Exception as error:
 
         print()
-        print("Could not get Wi-Fi information.")
-        print("Error:", error)
+
+        print(
+            "Could not read laptop Wi-Fi."
+        )
+
+        print(
+            "Error:",
+            error
+        )
 
         return None
 
 
 # =========================================================
-# SAVE ONE MEASUREMENT
+# SEND ONE MEASUREMENT TO RENDER
 # =========================================================
 
 def save_measurement(
@@ -81,10 +296,11 @@ def save_measurement(
     try:
 
         # -------------------------------------------------
-        # Get current real Wi-Fi information
+        # READ REAL WIFI FROM THIS LAPTOP
         # -------------------------------------------------
 
-        wifi = get_wifi()
+        wifi = get_local_wifi()
+
 
         if wifi is None:
 
@@ -92,22 +308,7 @@ def save_measurement(
 
 
         # -------------------------------------------------
-        # Check for Wi-Fi error
-        # -------------------------------------------------
-
-        if "error" in wifi:
-
-            print()
-            print(
-                "Wi-Fi error:",
-                wifi["error"]
-            )
-
-            return False
-
-
-        # -------------------------------------------------
-        # Read current Wi-Fi data
+        # GET WIFI VALUES
         # -------------------------------------------------
 
         ssid = wifi.get(
@@ -137,20 +338,24 @@ def save_measurement(
 
 
         # -------------------------------------------------
-        # Automatically determine location
+        # DETECT LOCATION
         # -------------------------------------------------
 
         location = WIFI_LOCATIONS.get(
+
             ssid,
+
             "Unknown Location"
+
         )
 
 
         # -------------------------------------------------
-        # Display measurement
+        # DISPLAY CURRENT WIFI
         # -------------------------------------------------
 
         print()
+
         print("=" * 65)
 
         print(
@@ -194,23 +399,46 @@ def save_measurement(
 
 
         # -------------------------------------------------
-        # Send only grid point to Flask
-        #
-        # Flask automatically gets the REAL Wi-Fi data
+        # CREATE DATA TO SEND
         # -------------------------------------------------
 
         measurement = {
 
             "measurement_point":
-                measurement_point
+                measurement_point,
+
+            "ssid":
+                ssid,
+
+            "signal_percent":
+                signal,
+
+            "rssi":
+                rssi,
+
+            "band":
+                band,
+
+            "channel":
+                channel
 
         }
 
 
+        # -------------------------------------------------
+        # CONVERT TO JSON
+        # -------------------------------------------------
+
         data = json.dumps(
+
             measurement
+
         ).encode()
 
+
+        # -------------------------------------------------
+        # CREATE POST REQUEST
+        # -------------------------------------------------
 
         request = urllib.request.Request(
 
@@ -219,8 +447,10 @@ def save_measurement(
             data=data,
 
             headers={
+
                 "Content-Type":
                     "application/json"
+
             },
 
             method="POST"
@@ -229,33 +459,50 @@ def save_measurement(
 
 
         # -------------------------------------------------
-        # Send measurement
+        # SEND TO RENDER
         # -------------------------------------------------
 
         response = urllib.request.urlopen(
+
             request,
-            timeout=5
-        )
 
+            timeout=15
 
-        result = json.loads(
-            response.read().decode()
         )
 
 
         # -------------------------------------------------
-        # Check result
+        # READ SERVER RESPONSE
+        # -------------------------------------------------
+
+        result = json.loads(
+
+            response.read().decode()
+
+        )
+
+
+        # -------------------------------------------------
+        # CHECK RESULT
         # -------------------------------------------------
 
         if result.get("status") == "success":
 
             saved_data = result.get(
+
                 "data",
+
                 {}
+
             )
 
+
             print()
-            print("✓ MEASUREMENT SAVED SUCCESSFULLY")
+
+            print(
+                "✓ MEASUREMENT SAVED SUCCESSFULLY"
+            )
+
             print()
 
             print(
@@ -266,6 +513,11 @@ def save_measurement(
             print(
                 "Location       :",
                 saved_data.get("location")
+            )
+
+            print(
+                "SSID           :",
+                saved_data.get("ssid")
             )
 
             print(
@@ -281,12 +533,17 @@ def save_measurement(
             )
 
             print(
-                "SSID           :",
-                saved_data.get("ssid")
+                "Band           :",
+                saved_data.get("band")
             )
 
             print(
-                "Time           :",
+                "Channel        :",
+                saved_data.get("channel")
+            )
+
+            print(
+                "Time            :",
                 saved_data.get("timestamp")
             )
 
@@ -298,6 +555,7 @@ def save_measurement(
         else:
 
             print()
+
             print(
                 "Server did not save the measurement."
             )
@@ -313,8 +571,9 @@ def save_measurement(
     except urllib.error.HTTPError as error:
 
         print()
+
         print(
-            "Server error:",
+            "Server HTTP error:",
             error.code
         )
 
@@ -331,9 +590,26 @@ def save_measurement(
         return False
 
 
+    except urllib.error.URLError as error:
+
+        print()
+
+        print(
+            "Could not connect to Render server."
+        )
+
+        print(
+            "Error:",
+            error
+        )
+
+        return False
+
+
     except Exception as error:
 
         print()
+
         print(
             "Measurement error:",
             error
@@ -347,13 +623,33 @@ def save_measurement(
 # =========================================================
 
 print()
+
 print("=" * 65)
-print("       AI-BASED WI-FI SIGNAL MAPPING")
-print("       REAL MEASUREMENT COLLECTION")
+
+print(
+    "       AI-BASED WI-FI SIGNAL MAPPING"
+)
+
+print(
+    "       REAL MEASUREMENT COLLECTION"
+)
+
 print("=" * 65)
 
 print()
+
+print(
+    "Connected server:"
+)
+
+print(
+    API_BASE
+)
+
+print()
+
 print("Grid area:")
+
 print("A1 - A5")
 print("B1 - B5")
 print("C1 - C5")
@@ -364,36 +660,40 @@ print("G1 - G5")
 print("H1 - H5")
 
 print()
-print("Type Q when you have finished collecting measurements.")
+
+print(
+    "Type Q when you have finished collecting measurements."
+)
+
 print()
 
 
 # =========================================================
-# CHECK FLASK SERVER
+# CHECK LAPTOP WIFI
 # =========================================================
 
-print("Checking Flask server...")
+print(
+    "Checking your laptop Wi-Fi..."
+)
 
-wifi = get_wifi()
+wifi = get_local_wifi()
+
 
 if wifi is None:
 
     print()
-    print("ERROR: Flask server is not responding.")
-    print()
-    print("Make sure this is running in another CMD:")
-    print()
-    print("    python app.py")
+
+    print(
+        "ERROR: Could not read laptop Wi-Fi."
+    )
+
     print()
 
-    input("Press Enter to exit...")
+    input(
+        "Press Enter to exit..."
+    )
 
     raise SystemExit
-
-
-print("Flask server connected.")
-
-print()
 
 
 # =========================================================
@@ -401,25 +701,55 @@ print()
 # =========================================================
 
 current_ssid = wifi.get(
+
     "ssid",
+
     "Unknown"
+
 )
 
 current_signal = wifi.get(
+
     "signal_percent",
+
     0
+
 )
 
 current_rssi = wifi.get(
+
     "rssi",
+
     0
+
+)
+
+current_band = wifi.get(
+
+    "band",
+
+    "Unknown"
+
+)
+
+current_channel = wifi.get(
+
+    "channel",
+
+    "Unknown"
+
 )
 
 current_location = WIFI_LOCATIONS.get(
+
     current_ssid,
+
     "Unknown Location"
+
 )
 
+
+print()
 
 print("=" * 65)
 
@@ -445,88 +775,56 @@ print(
     "dBm"
 )
 
+print(
+    "Current band        :",
+    current_band
+)
+
+print(
+    "Current channel     :",
+    current_channel
+)
+
 print("=" * 65)
 
 print()
 
 
 # =========================================================
-# COLLECT MEASUREMENTS
+# MEASUREMENT LOOP
 # =========================================================
-
-collected_points = set()
-
 
 while True:
 
     print()
-    print("-" * 65)
 
-    print(
-        "Already collected:",
-        len(collected_points),
-        "grid point(s)"
-    )
+    measurement_point = input(
 
-    if collected_points:
+        "Enter measurement point (A1-H5) or Q to quit: "
+
+    ).strip()
+
+
+    # -----------------------------------------------------
+    # QUIT
+    # -----------------------------------------------------
+
+    if measurement_point.upper() == "Q":
+
+        print()
 
         print(
-            "Points:",
-            ", ".join(
-                sorted(collected_points)
-            )
+            "Measurement collection finished."
         )
 
-    print("-" * 65)
-
-    print()
-
-    # -----------------------------------------------------
-    # Ask for next point
-    # -----------------------------------------------------
-
-    point = input(
-        "Enter current grid point (example A1, B3, C5) or Q to finish: "
-    ).strip().upper()
-
-
-    # -----------------------------------------------------
-    # Quit
-    # -----------------------------------------------------
-
-    if point == "Q":
-
         print()
-        print("=" * 65)
-        print("MEASUREMENT COLLECTION FINISHED")
-        print("=" * 65)
 
-        print()
         print(
-            "Total grid points collected:",
-            len(collected_points)
-        )
-
-        if collected_points:
-
-            print()
-            print(
-                "Collected points:"
-            )
-
-            print(
-                ", ".join(
-                    sorted(collected_points)
-                )
-            )
-
-        print()
-        print(
-            "Open your dashboard:"
+            "Your data has been sent to:"
         )
 
         print(
-            "http://127.0.0.1:5000/dashboard.html"
+            API_BASE
         )
 
         print()
@@ -535,12 +833,15 @@ while True:
 
 
     # -----------------------------------------------------
-    # Validate grid point
+    # VALIDATE GRID POINT
     # -----------------------------------------------------
 
-    if not valid_grid_point(point):
+    if not valid_grid_point(
+        measurement_point
+    ):
 
         print()
+
         print(
             "Invalid grid point."
         )
@@ -549,146 +850,45 @@ while True:
             "Use A1 to H5."
         )
 
-        print(
-            "Examples: A1, B3, C5, H5"
-        )
+        print()
 
         continue
 
 
     # -----------------------------------------------------
-    # Prevent accidental duplicate
+    # CONVERT TO UPPERCASE
     # -----------------------------------------------------
 
-    if point in collected_points:
+    measurement_point = (
 
-        print()
-        print(
-            "You already collected",
-            point
-        )
+        measurement_point.upper()
 
-        print(
-            "Move to another grid point."
-        )
-
-        print(
-            "If you intentionally want another"
-        )
-
-        print(
-            "measurement at the same point,"
-        )
-
-        print(
-            "you can still continue by entering"
-        )
-
-        print(
-            "the point again after confirmation."
-        )
-
-        print()
-
-        confirm = input(
-            "Collect another measurement at "
-            + point
-            + "? (y/n): "
-        ).strip().lower()
-
-        if confirm != "y":
-
-            continue
-
-
-    # -----------------------------------------------------
-    # Ask user to physically move
-    # -----------------------------------------------------
-
-    print()
-    print("=" * 65)
-
-    print(
-        "CURRENT GRID POINT:",
-        point
-    )
-
-    print("=" * 65)
-
-    print()
-
-    print(
-        "Make sure your laptop is physically"
-    )
-
-    print(
-        "at grid point",
-        point
-    )
-
-    print()
-
-    input(
-        "Press ENTER when you are ready to measure..."
     )
 
 
     # -----------------------------------------------------
-    # Take measurement
+    # SAVE MEASUREMENT
     # -----------------------------------------------------
-
-    print()
-    print(
-        "Collecting REAL Wi-Fi measurement..."
-    )
-
-    time.sleep(1)
-
 
     success = save_measurement(
-        point
+
+        measurement_point
+
     )
 
 
     # -----------------------------------------------------
-    # Mark point as collected
+    # WAIT BEFORE NEXT MEASUREMENT
     # -----------------------------------------------------
 
     if success:
 
-        collected_points.add(
-            point
+        print()
+
+        print(
+            "Moving to the next measurement point..."
         )
 
         print()
-        print(
-            "✓",
-            point,
-            "has been added to the Wi-Fi map."
-        )
 
-    else:
-
-        print()
-        print(
-            "✗ Measurement was not saved."
-        )
-
-        print(
-            "Please try this point again."
-        )
-
-
-    # -----------------------------------------------------
-    # Small delay
-    # -----------------------------------------------------
-
-    time.sleep(1)
-
-
-# =========================================================
-# END
-# =========================================================
-
-print()
-print("Program stopped.")
+        time.sleep(2)

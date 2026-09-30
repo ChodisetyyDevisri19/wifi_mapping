@@ -26,11 +26,31 @@ The system collects Wi-Fi signal information and displays it through a web-based
 - 📡 Automatic Wi-Fi measurement
 - 💾 Local data storage using SQLite
 
-## 🖥️ Dashboard
+## 🖥️ Project Screenshots
 
-The project provides a web-based dashboard for monitoring and analyzing Wi-Fi signal strength.
+### Wi-Fi Signal Mapping Dashboard
+
+The dashboard provides real-time visualization of Wi-Fi signal information, RSSI values, graphs, heatmap information, and recommendations.
 
 ![Wi-Fi Signal Mapping Dashboard](dashboard.png)
+
+### System Architecture
+
+The system architecture shows the flow from Wi-Fi signal collection through processing, storage, analysis, and dashboard visualization.
+
+![System Architecture](architecture.png)
+
+### System Flowchart
+
+The flowchart represents the complete sequence of operations performed by the Wi-Fi signal mapping system.
+
+![System Flowchart](flowchart.png)
+
+### Working Methodology
+
+The working methodology illustrates the three major stages: data collection, data processing, and visualization/output.
+
+![Working Methodology](working.png)
 
 ## 🧩 System Components
 

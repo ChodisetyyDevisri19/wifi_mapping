@@ -1,15 +1,3 @@
-/* =========================================================
-   AI-BASED WI-FI SIGNAL MAPPING SYSTEM
-   COMPLETE REAL-TIME DASHBOARD SCRIPT
-========================================================= */
-
-const API_BASE = "http://127.0.0.1:5000";
-
-
-/* =========================================================
-   START
-========================================================= */
-
 document.addEventListener("DOMContentLoaded", function () {
 
     initializeLogin();
@@ -19,7 +7,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 /* =========================================================
-   LOGIN
+   RENDER BACKEND
+========================================================= */
+
+/*
+   The dashboard and Flask backend are hosted on the
+   same Render server.
+
+   Therefore we use relative API URLs such as:
+
+       /api/wifi
+       /api/data
+       /api/analyze
+
+   This works both on Render and locally.
+*/
+
+const API_BASE = "";
+
+
+/* =========================================================
+   LOGIN PAGE
 ========================================================= */
 
 function initializeLogin() {
@@ -31,6 +39,7 @@ function initializeLogin() {
         return;
     }
 
+
     const passwordInput =
         document.getElementById("password");
 
@@ -41,7 +50,7 @@ function initializeLogin() {
         document.getElementById("loginError");
 
 
-    if (togglePassword && passwordInput) {
+    if (togglePassword) {
 
         togglePassword.addEventListener(
             "click",
@@ -51,10 +60,14 @@ function initializeLogin() {
                     passwordInput.type === "password";
 
                 passwordInput.type =
-                    isPassword ? "text" : "password";
+                    isPassword
+                        ? "text"
+                        : "password";
 
                 togglePassword.textContent =
-                    isPassword ? "Hide" : "Show";
+                    isPassword
+                        ? "Hide"
+                        : "Show";
 
             }
         );
@@ -68,17 +81,24 @@ function initializeLogin() {
 
             event.preventDefault();
 
+
             const username =
                 document
                     .getElementById("username")
                     .value
                     .trim();
 
+
             const password =
                 passwordInput.value.trim();
 
 
+            /*
+             * Existing frontend demo login.
+             */
+
             const validUsername = "demo";
+
             const validPassword = "demo123";
 
 
@@ -97,10 +117,13 @@ function initializeLogin() {
                     username
                 );
 
+
                 window.location.href =
                     "dashboard.html";
 
-            } else {
+            }
+
+            else {
 
                 if (loginError) {
 
@@ -111,7 +134,9 @@ function initializeLogin() {
 
                 }
 
+
                 passwordInput.value = "";
+
                 passwordInput.focus();
 
             }
@@ -133,6 +158,7 @@ function initializeDashboard() {
             "[data-page='dashboard']"
         );
 
+
     if (!dashboardPage) {
         return;
     }
@@ -150,6 +176,7 @@ function initializeDashboard() {
             "index.html";
 
         return;
+
     }
 
 
@@ -157,19 +184,13 @@ function initializeDashboard() {
 
     initializeMobileMenu();
 
-    initializeNavigation();
-
     initializeHeatMap();
 
     initializeRSSIChart();
 
+    initializeNavigation();
+
     initializeDemoButtons();
-
-    loadWiFiData();
-
-    updateLocation();
-
-    loadRecentMeasurements();
 
 }
 
@@ -184,6 +205,7 @@ function initializeLogout() {
         document.getElementById(
             "logoutButton"
         );
+
 
     if (!logoutButton) {
         return;
@@ -201,6 +223,7 @@ function initializeLogout() {
             sessionStorage.removeItem(
                 "wifiDemoUsername"
             );
+
 
             window.location.href =
                 "index.html";
@@ -221,6 +244,7 @@ function initializeMobileMenu() {
         document.getElementById(
             "mobileMenuButton"
         );
+
 
     const sidebar =
         document.getElementById(
@@ -248,11 +272,16 @@ function initializeMobileMenu() {
     );
 
 
-    document
-        .querySelectorAll(".nav-item")
-        .forEach(function (item) {
+    const navItems =
+        document.querySelectorAll(
+            ".nav-item"
+        );
 
-            item.addEventListener(
+
+    navItems.forEach(
+        function (navItem) {
+
+            navItem.addEventListener(
                 "click",
                 function () {
 
@@ -263,61 +292,7 @@ function initializeMobileMenu() {
                 }
             );
 
-        });
-
-}
-
-
-/* =========================================================
-   SIGNAL CLASS
-========================================================= */
-
-function getSignalClass(rssi) {
-
-    if (rssi >= -59) {
-        return "excellent-color";
-    }
-
-    if (rssi >= -66) {
-        return "good-color";
-    }
-
-    if (rssi >= -74) {
-        return "fair-color";
-    }
-
-    if (rssi >= -79) {
-        return "poor-color";
-    }
-
-    return "weak-color";
-
-}
-
-
-/* =========================================================
-   GET GRID POINT
-========================================================= */
-
-function getGridPoint(location) {
-
-    const text =
-        String(location || "");
-
-    const match =
-        text.match(
-            /\b([A-H])\s*[- ]?\s*([1-5])\b/i
-        );
-
-
-    if (!match) {
-        return null;
-    }
-
-
-    return (
-        match[1].toUpperCase() +
-        match[2]
+        }
     );
 
 }
@@ -361,170 +336,99 @@ async function initializeHeatMap() {
             await response.json();
 
 
-        if (
-            !Array.isArray(measurements)
-        ) {
-            return;
-        }
-
-
-        /* =========================================
-           UPDATE AI
-        ========================================= */
-
         updateAIRecommendation(
             measurements
         );
 
 
-        /* =========================================
-           LATEST MEASUREMENT
-        ========================================= */
+        /*
+         * Clear old heat map.
+         */
 
-        const latestMeasurement =
-            measurements.length > 0
-                ? measurements[
-                    measurements.length - 1
-                ]
-                : null;
+        heatmapGrid.innerHTML = "";
 
 
-        /* =========================================
-           CURRENT LOCATION TEXT
-        ========================================= */
-
-        const locationMarker =
-            document.querySelector(
-                ".heatmap-location-marker"
-            );
-
-
-        if (
-            locationMarker &&
-            latestMeasurement
-        ) {
-
-            locationMarker.innerHTML =
-                '<span class="location-marker-dot"></span>' +
-                " Current measurement: " +
-                (
-                    latestMeasurement.location ||
-                    "Unknown Location"
-                );
-
-        }
+        const columnLabels = [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F",
+            "G",
+            "H"
+        ];
 
 
-        /* =========================================
-           GROUP READINGS BY GRID POINT
-           
-           IMPORTANT:
-           We calculate the average RSSI
-           for every grid point.
-           
-           Example:
-           
-           A1 = -50, -51, -49
-           
-           Average:
-           
-           A1 = -50 dBm
-           
-           D3 = -55, -56, -57
-           
-           Average:
-           
-           D3 = -56 dBm
-           
-           The heat map and AI use the SAME
-           averaged values.
-        ========================================= */
+        const gridMeasurements = {};
 
-        const gridPoints =
-            new Map();
 
+        /*
+         * Store measurements according
+         * to their grid coordinates.
+         */
 
         measurements.forEach(
             function (measurement) {
 
-                const point =
-                    getGridPoint(
-                        measurement.location
+                const location =
+                    String(
+                        measurement.location ||
+                        ""
                     );
 
 
-                if (!point) {
-                    return;
-                }
-
-
-                const rssi =
-                    Number(
-                        measurement.rssi
+                const match =
+                    location.match(
+                        /\b([A-H])\s*[- ]?\s*([1-5])\b/i
                     );
 
 
-                if (isNaN(rssi)) {
-                    return;
-                }
+                if (match) {
+
+                    const coordinate =
+                        match[1].toUpperCase()
+                        +
+                        match[2];
 
 
-                if (!gridPoints.has(point)) {
-
-                    gridPoints.set(
-                        point,
-                        {
-                            readings: [],
-                            latestMeasurement: null,
-                            location:
-                                measurement.location
-                        }
-                    );
+                    gridMeasurements[
+                        coordinate
+                    ] = measurement;
 
                 }
-
-
-                const data =
-                    gridPoints.get(point);
-
-
-                data.readings.push(rssi);
-
-                data.latestMeasurement =
-                    measurement;
-
-                data.location =
-                    measurement.location;
 
             }
         );
 
 
-        /* =========================================
-           CREATE GRID
-           
-           8 columns:
-           A B C D E F G H
-           
-           5 rows:
-           1 2 3 4 5
-        ========================================= */
+        /*
+         * If no grid coordinate exists,
+         * show latest measurement at B3.
+         */
 
-        heatmapGrid.innerHTML = "";
+        if (
+            measurements.length > 0 &&
+            Object.keys(
+                gridMeasurements
+            ).length === 0
+        ) {
+
+            const latest =
+                measurements[
+                    measurements.length - 1
+                ];
 
 
-        const columns =
-            [
-                "A",
-                "B",
-                "C",
-                "D",
-                "E",
-                "F",
-                "G",
-                "H"
-            ];
+            gridMeasurements["B3"] =
+                latest;
 
+        }
+
+
+        /*
+         * Create 5 x 8 grid.
+         */
 
         for (
             let row = 1;
@@ -533,15 +437,10 @@ async function initializeHeatMap() {
         ) {
 
             for (
-                let column = 0;
-                column < columns.length;
-                column++
+                let col = 0;
+                col < columnLabels.length;
+                col++
             ) {
-
-                const coordinate =
-                    columns[column] +
-                    row;
-
 
                 const cell =
                     document.createElement(
@@ -549,24 +448,23 @@ async function initializeHeatMap() {
                     );
 
 
+                const coordinate =
+                    columnLabels[col]
+                    +
+                    row;
+
+
+                const measurement =
+                    gridMeasurements[
+                        coordinate
+                    ];
+
+
                 cell.className =
                     "heat-cell";
 
 
-                const data =
-                    gridPoints.get(
-                        coordinate
-                    );
-
-
-                /* =================================
-                   NO DATA
-                ================================= */
-
-                if (
-                    !data ||
-                    data.readings.length === 0
-                ) {
+                if (!measurement) {
 
                     cell.textContent = "—";
 
@@ -576,61 +474,45 @@ async function initializeHeatMap() {
 
                 }
 
-
-                /* =================================
-                   DATA AVAILABLE
-                ================================= */
-
                 else {
 
-                    const total =
-                        data.readings.reduce(
-                            function (
-                                sum,
-                                value
-                            ) {
-
-                                return sum + value;
-
-                            },
-                            0
+                    const rssi =
+                        Number(
+                            measurement.rssi
                         );
 
 
-                    const average =
-                        total /
-                        data.readings.length;
-
-
                     cell.className =
-                        "heat-cell " +
+                        "heat-cell "
+                        +
                         getSignalClass(
-                            average
+                            rssi
                         );
 
 
                     cell.textContent =
-                        Math.round(
-                            average
-                        );
+                        rssi;
 
 
                     cell.title =
-                        coordinate +
-                        " | Average RSSI: " +
-                        average.toFixed(1) +
-                        " dBm | Readings: " +
-                        data.readings.length;
+                        coordinate
+                        +
+                        " | RSSI: "
+                        +
+                        rssi
+                        +
+                        " dBm";
 
 
-                    /* =================================
-                       HIGHLIGHT CURRENT LOCATION
-                    ================================= */
+                    /*
+                     * Highlight latest measurement.
+                     */
 
                     if (
-                        latestMeasurement &&
-                        data.latestMeasurement ===
-                        latestMeasurement
+                        measurement ===
+                        measurements[
+                            measurements.length - 1
+                        ]
                     ) {
 
                         cell.classList.add(
@@ -651,1713 +533,94 @@ async function initializeHeatMap() {
         }
 
 
-        console.log(
-            "Heat map updated.",
-            "Total readings:",
-            measurements.length,
-            "Grid points:",
-            gridPoints.size
-        );
+        /*
+         * Update average RSSI and weak zones.
+         */
 
+        if (
+            measurements.length > 0
+        ) {
 
-    } catch (error) {
-
-        console.error(
-            "Heat map error:",
-            error
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   AI RECOMMENDATION
-========================================================= */
-
-function updateAIRecommendation(measurements) {
-
-    /*
-     * =====================================================
-     * AI-BASED ROUTER PLACEMENT ANALYSIS
-     * =====================================================
-     *
-     * This function ONLY changes the AI calculation.
-     *
-     * Dashboard:
-     *      NOT changed
-     *
-     * Heat map:
-     *      NOT changed
-     *
-     * RSSI chart:
-     *      NOT changed
-     *
-     * Database:
-     *      NOT changed
-     *
-     * The algorithm evaluates:
-     *
-     * 1. Average RSSI
-     * 2. Coverage around each candidate point
-     * 3. Weak-zone penalty
-     * 4. Distance from measured points
-     * 5. Number of measurements
-     *
-     * The purpose is to find a BALANCED router
-     * placement instead of simply choosing the
-     * strongest single RSSI point.
-     */
-
-
-    /* =====================================================
-       1. CHECK MEASUREMENTS
-    ===================================================== */
-
-    if (
-        !Array.isArray(measurements) ||
-        measurements.length === 0
-    ) {
-
-        console.log(
-            "AI: No measurements available."
-        );
-
-        return;
-    }
-
-
-    /* =====================================================
-       2. CREATE CLEAN MEASUREMENT DATA
-    ===================================================== */
-
-    const validMeasurements =
-        measurements
-            .filter(function (measurement) {
-
-                return (
-                    measurement &&
-                    measurement.rssi !== undefined &&
-                    measurement.rssi !== null &&
-                    !isNaN(
-                        Number(measurement.rssi)
-                    ) &&
-                    getGridPoint(
-                        measurement.location
+            const rssiValues =
+                measurements
+                    .map(
+                        item =>
+                            Number(item.rssi)
                     )
-                );
-
-            })
-            .map(function (measurement) {
-
-                return {
-
-                    rssi:
-                        Number(
-                            measurement.rssi
-                        ),
-
-                    location:
-                        String(
-                            measurement.location ||
-                            "Unknown Location"
-                        ),
-
-                    point:
-                        getGridPoint(
-                            measurement.location
-                        )
-
-                };
-
-            });
-
-
-    if (
-        validMeasurements.length === 0
-    ) {
-
-        console.log(
-            "AI: No valid measurements."
-        );
-
-        return;
-    }
-
-
-    /* =====================================================
-       3. GROUP MEASUREMENTS BY GRID POINT
-    ===================================================== */
-
-    const gridData = {};
-
-
-    validMeasurements.forEach(
-        function (measurement) {
-
-            const point =
-                measurement.point;
-
-
-            if (!gridData[point]) {
-
-                gridData[point] = {
-
-                    point:
-                        point,
-
-                    location:
-                        measurement.location,
-
-                    readings:
-                        []
-
-                };
-
-            }
-
-
-            gridData[point]
-                .readings
-                .push(
-                    measurement.rssi
-                );
-
-        }
-    );
-
-
-    /* =====================================================
-       4. CALCULATE AVERAGE RSSI FOR EACH GRID POINT
-    ===================================================== */
-
-    const points = [];
-
-
-    Object.keys(gridData)
-        .forEach(
-            function (pointName) {
-
-                const data =
-                    gridData[pointName];
-
-
-                if (
-                    data.readings.length === 0
-                ) {
-                    return;
-                }
-
-
-                const total =
-                    data.readings.reduce(
-                        function (
-                            sum,
-                            value
-                        ) {
-
-                            return (
-                                sum + value
-                            );
-
-                        },
-                        0
+                    .filter(
+                        value =>
+                            !isNaN(value)
                     );
 
+
+            if (
+                rssiValues.length > 0
+            ) {
 
                 const averageRSSI =
-                    total /
-                    data.readings.length;
-
-
-                const strongestRSSI =
-                    Math.max(
-                        ...data.readings
-                    );
-
-
-                const weakestRSSI =
-                    Math.min(
-                        ...data.readings
-                    );
-
-
-                /* -----------------------------------------
-                   SIGNAL QUALITY
-                ----------------------------------------- */
-
-                let excellent = 0;
-                let good = 0;
-                let fair = 0;
-                let poor = 0;
-                let weak = 0;
-
-
-                data.readings.forEach(
-                    function (rssi) {
-
-                        if (
-                            rssi >= -59
-                        ) {
-
-                            excellent++;
-
-                        }
-                        else if (
-                            rssi >= -66
-                        ) {
-
-                            good++;
-
-                        }
-                        else if (
-                            rssi >= -74
-                        ) {
-
-                            fair++;
-
-                        }
-                        else if (
-                            rssi >= -79
-                        ) {
-
-                            poor++;
-
-                        }
-                        else {
-
-                            weak++;
-
-                        }
-
-                    }
-                );
-
-
-                const totalReadings =
-                    data.readings.length;
-
-
-                const acceptable =
-                    excellent +
-                    good +
-                    fair;
-
-
-                const coverage =
-                    (
-                        acceptable /
-                        totalReadings
-                    ) * 100;
-
-
-                points.push({
-
-                    point:
-                        pointName,
-
-                    location:
-                        data.location,
-
-                    averageRSSI:
-                        averageRSSI,
-
-                    strongestRSSI:
-                        strongestRSSI,
-
-                    weakestRSSI:
-                        weakestRSSI,
-
-                    readings:
-                        totalReadings,
-
-                    excellent:
-                        excellent,
-
-                    good:
-                        good,
-
-                    fair:
-                        fair,
-
-                    poor:
-                        poor,
-
-                    weak:
-                        weak,
-
-                    coverage:
-                        coverage
-
-                });
-
-            }
-        );
-
-
-    if (
-        points.length === 0
-    ) {
-
-        return;
-    }
-
-
-    /* =====================================================
-       5. CONVERT GRID POINT TO X/Y COORDINATES
-    ===================================================== */
-
-    function getCoordinates(point) {
-
-        const match =
-            point.match(
-                /^([A-H])([1-5])$/
-            );
-
-
-        if (!match) {
-
-            return null;
-
-        }
-
-
-        return {
-
-            x:
-                match[1].charCodeAt(0) -
-                "A".charCodeAt(0),
-
-            y:
-                Number(
-                    match[2]
-                ) - 1
-
-        };
-
-    }
-
-
-    /* =====================================================
-       6. CALCULATE AI SCORE FOR EVERY CANDIDATE
-    ===================================================== */
-
-    points.forEach(
-        function (candidate) {
-
-            const candidateCoordinates =
-                getCoordinates(
-                    candidate.point
-                );
-
-
-            if (!candidateCoordinates) {
-
-                candidate.aiScore =
-                    -Infinity;
-
-                return;
-
-            }
-
-
-            let weightedRSSI = 0;
-
-            let totalWeight = 0;
-
-            let nearbyCoverage = 0;
-
-            let nearbyWeight = 0;
-
-            let weakPenalty = 0;
-
-
-            /* ---------------------------------------------
-               COMPARE CANDIDATE WITH EVERY MEASURED POINT
-            --------------------------------------------- */
-
-            points.forEach(
-                function (target) {
-
-                    const targetCoordinates =
-                        getCoordinates(
-                            target.point
-                        );
-
-
-                    if (
-                        !targetCoordinates
-                    ) {
-
-                        return;
-
-                    }
-
-
-                    const dx =
-                        candidateCoordinates.x -
-                        targetCoordinates.x;
-
-
-                    const dy =
-                        candidateCoordinates.y -
-                        targetCoordinates.y;
-
-
-                    const distance =
-                        Math.sqrt(
-                            (
-                                dx * dx
-                            ) +
-                            (
-                                dy * dy
-                            )
-                        );
-
-
-                    /*
-                     * Nearby points receive greater
-                     * importance.
-                     *
-                     * Same point:
-                     * distance = 0
-                     *
-                     * Nearby:
-                     * distance = 1
-                     *
-                     * Farther:
-                     * lower weight
-                     */
-
-                    const weight =
-                        1 /
+                    rssiValues.reduce(
                         (
-                            1 +
-                            distance
-                        );
-
-
-                    weightedRSSI +=
-                        target.averageRSSI *
-                        weight;
-
-
-                    totalWeight +=
-                        weight;
-
-
-                    nearbyCoverage +=
-                        target.coverage *
-                        weight;
-
-
-                    nearbyWeight +=
-                        weight;
-
-
-                    /*
-                     * Penalize weak areas.
-                     *
-                     * Very weak measurements have
-                     * greater penalty.
-                     */
-
-                    if (
-                        target.averageRSSI <= -80
-                    ) {
-
-                        weakPenalty +=
-                            25 * weight;
-
-                    }
-                    else if (
-                        target.averageRSSI <= -74
-                    ) {
-
-                        weakPenalty +=
-                            10 * weight;
-
-                    }
-
-                }
-            );
-
-
-            /* ---------------------------------------------
-               SPATIAL RSSI
-            --------------------------------------------- */
-
-            const spatialRSSI =
-                totalWeight > 0
-                    ? weightedRSSI /
-                      totalWeight
-                    : candidate.averageRSSI;
-
-
-            /* ---------------------------------------------
-               SPATIAL COVERAGE
-            --------------------------------------------- */
-
-            const spatialCoverage =
-                nearbyWeight > 0
-                    ? nearbyCoverage /
-                      nearbyWeight
-                    : candidate.coverage;
-
-
-            /* ---------------------------------------------
-               RSSI SCORE
-            --------------------------------------------- */
-
-            let rssiScore =
-                (
-                    (
-                        spatialRSSI + 90
-                    ) /
-                    40
-                ) * 100;
-
-
-            rssiScore =
-                Math.max(
-                    0,
-                    Math.min(
-                        100,
-                        rssiScore
+                            sum,
+                            value
+                        ) =>
+                            sum + value,
+                        0
                     )
-                );
+                    /
+                    rssiValues.length;
 
 
-            /* ---------------------------------------------
-               COVERAGE SCORE
-            --------------------------------------------- */
+                const averageElement =
+                    document.getElementById(
+                        "averageRSSI"
+                    );
 
-            const coverageScore =
-                Math.max(
-                    0,
-                    Math.min(
-                        100,
-                        spatialCoverage
-                    )
-                );
 
+                if (averageElement) {
 
-            /* ---------------------------------------------
-               CONSISTENCY SCORE
-            --------------------------------------------- */
-
-            let consistencyScore =
-                100;
-
-
-            const variation =
-                candidate.strongestRSSI -
-                candidate.weakestRSSI;
-
-
-            if (
-                variation > 15
-            ) {
-
-                consistencyScore = 70;
-
-            }
-            else if (
-                variation > 10
-            ) {
-
-                consistencyScore = 80;
-
-            }
-            else if (
-                variation > 5
-            ) {
-
-                consistencyScore = 90;
-
-            }
-
-
-            /* ---------------------------------------------
-               MEASUREMENT RELIABILITY
-            --------------------------------------------- */
-
-            let reliabilityScore =
-                Math.min(
-                    100,
-                    candidate.readings * 20
-                );
-
-
-            /*
-             * If only one reading exists,
-             * reliability is intentionally low.
-             */
-
-            if (
-                candidate.readings === 1
-            ) {
-
-                reliabilityScore = 40;
-
-            }
-
-
-            /* ---------------------------------------------
-               FINAL AI SCORE
-            ---------------------------------------------
-
-               RSSI             = 40%
-               Coverage         = 35%
-               Consistency      = 10%
-               Reliability      = 15%
-
-               Weak areas are
-               separately penalized.
-            */
-
-            const rawScore =
-
-                (
-                    rssiScore * 0.40
-                ) +
-
-                (
-                    coverageScore * 0.35
-                ) +
-
-                (
-                    consistencyScore * 0.10
-                ) +
-
-                (
-                    reliabilityScore * 0.15
-                );
-
-
-            candidate.aiScore =
-                rawScore -
-                weakPenalty;
-
-
-            candidate.spatialRSSI =
-                spatialRSSI;
-
-
-            candidate.spatialCoverage =
-                spatialCoverage;
-
-
-            candidate.weakPenalty =
-                weakPenalty;
-
-        }
-    );
-
-
-    /* =====================================================
-       7. FIND BEST PLACEMENT
-    ===================================================== */
-
-    let bestPoint =
-        points[0];
-
-
-    points.forEach(
-        function (candidate) {
-
-            if (
-                candidate.aiScore >
-                bestPoint.aiScore
-            ) {
-
-                bestPoint =
-                    candidate;
-
-            }
-
-        }
-    );
-
-
-    /* =====================================================
-       8. OVERALL NETWORK RSSI
-    ===================================================== */
-
-    let overallTotal = 0;
-
-
-    points.forEach(
-        function (point) {
-
-            overallTotal +=
-                point.averageRSSI;
-
-        }
-    );
-
-
-    const overallAverage =
-        overallTotal /
-        points.length;
-
-
-    /* =====================================================
-       9. WEAK ZONES
-    ===================================================== */
-
-    const weakPoints =
-        points.filter(
-            function (point) {
-
-                return (
-                    point.averageRSSI <= -80
-                );
-
-            }
-        );
-
-
-    const weakZones =
-        weakPoints.length;
-
-
-    /* =====================================================
-       10. OVERALL COVERAGE
-    ===================================================== */
-
-    const acceptablePoints =
-        points.filter(
-            function (point) {
-
-                return (
-                    point.averageRSSI >= -74
-                );
-
-            }
-        ).length;
-
-
-    const coveragePercentage =
-        Math.round(
-
-            (
-                acceptablePoints /
-                points.length
-            ) * 100
-
-        );
-
-
-    /* =====================================================
-       11. RSSI DIFFERENCE
-    ===================================================== */
-
-    const improvement =
-        Math.max(
-
-            0,
-
-            Math.round(
-
-                bestPoint.averageRSSI -
-                overallAverage
-
-            )
-
-        );
-
-
-    /* =====================================================
-       12. UPDATE EXISTING COVERAGE SYSTEM
-    ===================================================== */
-
-    updateCoverageDistribution(
-        points
-    );
-
-
-    /* =====================================================
-       13. UPDATE YOUR EXISTING DASHBOARD
-    =====================================================
-
-       IMPORTANT:
-
-       This uses the SAME existing function
-       already present in your script.
-
-       Therefore your current dashboard design
-       does not need to change.
-    */
-
-    updateAIInterface(
-
-        bestPoint.location,
-
-        bestPoint.averageRSSI,
-
-        overallAverage,
-
-        points.length,
-
-        weakZones,
-
-        coveragePercentage,
-
-        improvement
-
-    );
-
-
-    /* =====================================================
-       14. AI EXPLANATION FOR CONSOLE
-    ===================================================== */
-
-    console.log(
-        "=========================================="
-    );
-
-    console.log(
-        "AI ROUTER PLACEMENT ANALYSIS"
-    );
-
-    console.log(
-        "=========================================="
-    );
-
-
-    console.log(
-        "Real measurements:",
-        validMeasurements.length
-    );
-
-
-    console.log(
-        "Measured grid points:",
-        points.length
-    );
-
-
-    console.log(
-        "Overall average RSSI:",
-        overallAverage.toFixed(1),
-        "dBm"
-    );
-
-
-    console.log(
-        "Overall coverage:",
-        coveragePercentage + "%"
-    );
-
-
-    console.log(
-        "Weak zones:",
-        weakZones
-    );
-
-
-    console.log(
-        "------------------------------------------"
-    );
-
-
-    console.log(
-        "AI CANDIDATE ANALYSIS:"
-    );
-
-
-    points
-        .slice()
-        .sort(
-            function (a, b) {
-
-                return (
-                    b.aiScore -
-                    a.aiScore
-                );
-
-            }
-        )
-        .forEach(
-            function (point) {
-
-                console.log(
-
-                    point.point +
-                    " | Average RSSI: " +
-                    point.averageRSSI.toFixed(1) +
-                    " dBm" +
-                    " | Spatial RSSI: " +
-                    point.spatialRSSI.toFixed(1) +
-                    " dBm" +
-                    " | Coverage: " +
-                    point.spatialCoverage.toFixed(1) +
-                    "%" +
-                    " | AI Score: " +
-                    point.aiScore.toFixed(1)
-
-                );
-
-            }
-        );
-
-
-    console.log(
-        "------------------------------------------"
-    );
-
-
-    console.log(
-        "AI RECOMMENDED LOCATION:",
-        bestPoint.location
-    );
-
-
-    console.log(
-        "GRID POINT:",
-        bestPoint.point
-    );
-
-
-    console.log(
-        "AVERAGE RSSI:",
-        bestPoint.averageRSSI.toFixed(1),
-        "dBm"
-    );
-
-
-    console.log(
-        "SPATIAL RSSI:",
-        bestPoint.spatialRSSI.toFixed(1),
-        "dBm"
-    );
-
-
-    console.log(
-        "ESTIMATED COVERAGE:",
-        bestPoint.spatialCoverage.toFixed(1) +
-        "%"
-    );
-
-
-    console.log(
-        "AI PLACEMENT SCORE:",
-        bestPoint.aiScore.toFixed(1)
-    );
-
-
-    console.log(
-        "WEAK-ZONE PENALTY:",
-        bestPoint.weakPenalty.toFixed(1)
-    );
-
-
-    console.log(
-        "=========================================="
-    );
-
-} 
-/* =========================================================
-   UPDATE AI INTERFACE
-========================================================= */
-
-function updateAIInterface(
-
-    location,
-
-    strongestRSSI,
-
-    averageRSSI,
-
-    totalPoints,
-
-    weakZones,
-
-    coveragePercentage,
-
-    improvement
-
-) {
-
-    /* =====================================================
-       AI RECOMMENDED LOCATION
-    ===================================================== */
-
-    const title =
-        document.getElementById(
-            "aiRecommendation"
-        );
-
-    if (title) {
-
-        title.textContent =
-            "Best measured location: " +
-            location;
-
-    }
-
-
-    /* =====================================================
-       AI DESCRIPTION
-    ===================================================== */
-
-    const description =
-        document.getElementById(
-            "aiRecommendationText"
-        );
-
-  if (description) {
-
-    description.textContent =
-        "Based on the average RSSI measured at each grid point, " +
-        location +
-        " has the strongest average Wi-Fi signal at " +
-        Number(strongestRSSI).toFixed(1) +
-        " dBm. The AI analysis identifies this as the suggested router placement location based on the measured RSSI distribution.";
-}
-    /* =====================================================
-       EXPECTED COVERAGE
-    ===================================================== */
-
-    const weakReduction =
-        document.getElementById(
-            "weakReduction"
-        );
-
-    if (weakReduction) {
-
-        weakReduction.textContent =
-            Number(coveragePercentage || 0) +
-            "% coverage";
-
-    }
-
-
-    /* =====================================================
-       RSSI IMPROVEMENT
-    ===================================================== */
-
-    const improvementElement =
-        document.getElementById(
-            "rssiImprovement"
-        );
-
-    if (improvementElement) {
-
-        improvementElement.textContent =
-            "+" +
-            Number(improvement || 0) +
-            " dBm";
-
-    }
-
-
-    /* =====================================================
-       RECOMMENDED LOCATION
-    ===================================================== */
-
-    const locationElement =
-        document.getElementById(
-            "recommendedLocation"
-        );
-
-    if (locationElement) {
-
-        locationElement.textContent =
-            location;
-
-    }
-
-
-    /* =====================================================
-       HEAT MAP AVERAGE RSSI
-    ===================================================== */
-
-    const averageElement =
-        document.getElementById(
-            "averageRSSI"
-        );
-
-    if (averageElement) {
-
-        if (
-            averageRSSI !== undefined &&
-            averageRSSI !== null &&
-            !isNaN(Number(averageRSSI))
-        ) {
-
-            averageElement.textContent =
-                Number(averageRSSI).toFixed(0) +
-                " dBm";
-
-        }
-        else {
-
-            averageElement.textContent =
-                "-- dBm";
-
-        }
-
-    }
-
-
-    /* =====================================================
-       HEAT MAP WEAK ZONES
-    ===================================================== */
-
-    const weakZonesElement =
-        document.getElementById(
-            "weakZones"
-        );
-
-    if (weakZonesElement) {
-
-        weakZonesElement.textContent =
-            Number(weakZones || 0) +
-            " detected";
-
-    }
-
-
-    /* =====================================================
-       COVERAGE SUMMARY PERCENTAGE
-    ===================================================== */
-
-    const coverageElement =
-        document.getElementById(
-            "coveragePercent"
-        );
-
-    if (coverageElement) {
-
-        coverageElement.textContent =
-            Number(coveragePercentage || 0) +
-            "%";
-
-    }
-
-
-    /* =====================================================
-       NUMBER OF MEASURED POINTS
-    ===================================================== */
-
-    const pointsElement =
-        document.getElementById(
-            "measurementPoints"
-        );
-
-    if (pointsElement) {
-
-        pointsElement.textContent =
-            Number(totalPoints || 0) +
-            " POINTS";
-
-    }
-
-
-    /* =====================================================
-       COVERAGE SUMMARY MESSAGE
-    ===================================================== */
-
-    const coveragePanel =
-        document.getElementById(
-            "coverage"
-        );
-
-    if (coveragePanel) {
-
-        const heading =
-            coveragePanel.querySelector(
-                "h3"
-            );
-
-        const paragraph =
-            coveragePanel.querySelector(
-                "p"
-            );
-
-        const percentage =
-            Number(
-                coveragePercentage || 0
-            );
-
-
-        if (heading) {
-
-            if (percentage >= 90) {
-
-                heading.textContent =
-                    "Excellent overall coverage";
-
-            }
-            else if (percentage >= 75) {
-
-                heading.textContent =
-                    "Good overall coverage";
-
-            }
-            else if (percentage >= 50) {
-
-                heading.textContent =
-                    "Moderate overall coverage";
-
-            }
-            else {
-
-                heading.textContent =
-                    "Poor overall coverage";
-
-            }
-
-        }
-
-
-        if (paragraph) {
-
-            paragraph.textContent =
-                Number(totalPoints || 0) +
-                " measured grid points analyzed. " +
-                Number(coveragePercentage || 0) +
-                "% of the measured points are within the acceptable signal range.";
-
-        }
-
-    }
-
-
-    /* =====================================================
-       DEBUG INFORMATION
-    ===================================================== */
-
-    console.log(
-        "===================================="
-    );
-
-    console.log(
-        "DASHBOARD STATISTICS"
-    );
-
-    console.log(
-        "===================================="
-    );
-
-    console.log(
-        "Recommended location:",
-        location
-    );
-
-    console.log(
-        "Best RSSI:",
-        Number(strongestRSSI).toFixed(1),
-        "dBm"
-    );
-
-    console.log(
-        "Average RSSI:",
-        Number(averageRSSI).toFixed(1),
-        "dBm"
-    );
-
-    console.log(
-        "Measured grid points:",
-        totalPoints
-    );
-
-    console.log(
-        "Weak zones:",
-        weakZones
-    );
-
-    console.log(
-        "Coverage:",
-        coveragePercentage + "%"
-    );
-
-    console.log(
-        "Improvement:",
-        improvement + " dBm"
-    );
-
-    console.log(
-        "===================================="
-    );
-
-}
-/* =========================================================
-   UPDATE COVERAGE DISTRIBUTION
-========================================================= */
-
-function updateCoverageDistribution(
-    averagedPoints
-) {
-
-    if (
-        !averagedPoints ||
-        averagedPoints.length === 0
-    ) {
-
-        return;
-
-    }
-
-
-    let excellent = 0;
-
-    let good = 0;
-
-    let fair = 0;
-
-    let poor = 0;
-
-    let weak = 0;
-
-
-    /* =====================================================
-       CLASSIFY EACH GRID POINT
-    ===================================================== */
-
-    averagedPoints.forEach(
-        function (point) {
-
-            const rssi =
-                Number(
-                    point.averageRSSI
-                );
-
-
-            if (isNaN(rssi)) {
-
-                return;
-
-            }
-
-
-            if (rssi >= -59) {
-
-                excellent++;
-
-            }
-            else if (rssi >= -66) {
-
-                good++;
-
-            }
-            else if (rssi >= -74) {
-
-                fair++;
-
-            }
-            else if (rssi >= -79) {
-
-                poor++;
-
-            }
-            else {
-
-                weak++;
-
-            }
-
-        }
-    );
-
-
-    const total =
-        excellent +
-        good +
-        fair +
-        poor +
-        weak;
-
-
-    if (total === 0) {
-
-        return;
-
-    }
-
-
-    /* =====================================================
-       CALCULATE PERCENTAGES
-    ===================================================== */
-
-    const percentages = [
-
-        Math.round(
-            (excellent / total) * 100
-        ),
-
-        Math.round(
-            (good / total) * 100
-        ),
-
-        Math.round(
-            (fair / total) * 100
-        ),
-
-        Math.round(
-            (poor / total) * 100
-        ),
-
-        Math.round(
-            (weak / total) * 100
-        )
-
-    ];
-
-
-    /* =====================================================
-       FIND COVERAGE ROWS
-    ===================================================== */
-
-    const rows =
-        document.querySelectorAll(
-            "#coverage .coverage-row"
-        );
-
-
-    if (
-        !rows ||
-        rows.length < 5
-    ) {
-
-        console.log(
-            "Coverage distribution rows not found."
-        );
-
-        return;
-
-    }
-
-
-    /* =====================================================
-       UPDATE EACH ROW
-    ===================================================== */
-
-    rows.forEach(
-        function (row, index) {
-
-            const percentage =
-                percentages[index];
-
-
-            const percentageText =
-                row.querySelector(
-                    "strong"
-                );
-
-
-            const progressBar =
-                row.querySelector(
-                    ".progress-bar"
-                );
-
-
-            if (percentageText) {
-
-                percentageText.textContent =
-                    percentage + "%";
-
-            }
-
-
-            if (progressBar) {
-
-                progressBar.style.width =
-                    percentage + "%";
-
-            }
-
-        }
-    );
-
-
-    console.log(
-        "Coverage distribution updated:",
-        percentages
-    );
-
-}
-/* =========================================================
-   REAL WI-FI INFORMATION
-========================================================= */
-
-async function loadWiFiData() {
-
-    try {
-
-        const response =
-            await fetch(
-                API_BASE +
-                "/api/wifi"
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Wi-Fi API request failed"
-            );
-
-        }
-
-
-        const wifi =
-            await response.json();
-
-
-        const rssi =
-            wifi.rssi;
-
-        const signalPercent =
-            wifi.signal_percent;
-
-        const ssid =
-            wifi.ssid;
-
-        const band =
-            wifi.band;
-
-        const channel =
-            wifi.channel;
-
-
-        /* =========================================
-           RSSI
-        ========================================= */
-
-        document
-            .querySelectorAll(
-                '[data-wifi="rssi"]'
-            )
-            .forEach(
-                function (element) {
-
-                    element.textContent =
-                        rssi;
+                    averageElement.textContent =
+                        Math.round(
+                            averageRSSI
+                        )
+                        +
+                        " dBm";
 
                 }
-            );
 
 
-        /* =========================================
-           SIGNAL %
-        ========================================= */
-
-        document
-            .querySelectorAll(
-                '[data-wifi="signal-percent"]'
-            )
-            .forEach(
-                function (element) {
-
-                    element.textContent =
-                        signalPercent +
-                        "%";
-
-                }
-            );
+                const weakZones =
+                    rssiValues.filter(
+                        value =>
+                            value <= -80
+                    ).length;
 
 
-        /* =========================================
-           SSID
-        ========================================= */
+                const weakElement =
+                    document.getElementById(
+                        "weakZones"
+                    );
 
-        document
-            .querySelectorAll(
-                '[data-wifi="ssid"]'
-            )
-            .forEach(
-                function (element) {
 
-                    element.textContent =
-                        ssid;
+                if (weakElement) {
+
+                    weakElement.textContent =
+                        weakZones
+                        +
+                        " detected";
 
                 }
-            );
-
-
-        /* =========================================
-           BAND
-        ========================================= */
-
-        document
-            .querySelectorAll(
-                '[data-wifi="band"]'
-            )
-            .forEach(
-                function (element) {
-
-                    element.textContent =
-                        band;
-
-                }
-            );
-
-
-        /* =========================================
-           CHANNEL
-        ========================================= */
-
-        document
-            .querySelectorAll(
-                '[data-wifi="channel"]'
-            )
-            .forEach(
-                function (element) {
-
-                    element.textContent =
-                        channel;
-
-                }
-            );
-
-
-        console.log(
-            "REAL WI-FI DATA:",
-            wifi
-        );
-
-
-        /* =========================================
-           TOTAL MEASUREMENTS
-        ========================================= */
-
-        const dataResponse =
-            await fetch(
-                API_BASE +
-                "/api/data"
-            );
-
-
-        if (dataResponse.ok) {
-
-            const measurements =
-                await dataResponse.json();
-
-
-            const totalElement =
-                document.getElementById(
-                    "totalMeasurements"
-                );
-
-
-            if (totalElement) {
-
-                totalElement.textContent =
-                    measurements.length;
 
             }
 
         }
 
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
         console.error(
-            "Could not load Wi-Fi data:",
+            "Could not load heat map data:",
             error
         );
 
@@ -2367,94 +630,32 @@ async function loadWiFiData() {
 
 
 /* =========================================================
-   UPDATE CURRENT LOCATION
+   RSSI SIGNAL CLASS
 ========================================================= */
 
-async function updateLocation() {
+function getSignalClass(rssi) {
 
-    try {
-
-        const response =
-            await fetch(
-                API_BASE +
-                "/api/data"
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Measurement API request failed"
-            );
-
-        }
-
-
-        const measurements =
-            await response.json();
-
-
-        if (
-            !measurements ||
-            measurements.length === 0
-        ) {
-            return;
-        }
-
-
-        const latest =
-            measurements[
-                measurements.length - 1
-            ];
-
-
-        const location =
-            latest.location ||
-            "Unknown Location";
-
-
-        const measurementLocation =
-            document.getElementById(
-                "measurementLocation"
-            );
-
-
-        const currentLocation =
-            document.getElementById(
-                "currentLocation"
-            );
-
-
-        if (measurementLocation) {
-
-            measurementLocation.textContent =
-                location;
-
-        }
-
-
-        if (currentLocation) {
-
-            currentLocation.textContent =
-                location;
-
-        }
-
-
-        console.log(
-            "Current location:",
-            location
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Could not update location:",
-            error
-        );
-
+    if (rssi >= -59) {
+        return "excellent-color";
     }
+
+
+    if (rssi >= -66) {
+        return "good-color";
+    }
+
+
+    if (rssi >= -74) {
+        return "fair-color";
+    }
+
+
+    if (rssi >= -79) {
+        return "poor-color";
+    }
+
+
+    return "weak-color";
 
 }
 
@@ -2465,26 +666,28 @@ async function updateLocation() {
 
 function initializeRSSIChart() {
 
-    const canvas =
+    const chartCanvas =
         document.getElementById(
             "rssiChart"
         );
 
 
     if (
-        !canvas ||
+        !chartCanvas ||
         typeof Chart === "undefined"
     ) {
         return;
     }
 
 
-    const context =
-        canvas.getContext("2d");
+    const chartContext =
+        chartCanvas.getContext(
+            "2d"
+        );
 
 
     const gradient =
-        context.createLinearGradient(
+        chartContext.createLinearGradient(
             0,
             0,
             0,
@@ -2504,95 +707,168 @@ function initializeRSSIChart() {
     );
 
 
-    const chart =
-        new Chart(
-            context,
-            {
+    new Chart(
+        chartContext,
+        {
 
-                type: "line",
+            type: "line",
 
-                data: {
 
-                    labels: [],
+            data: {
 
-                    datasets: [
-                        {
+                labels: [
+                    "10:00",
+                    "10:05",
+                    "10:10",
+                    "10:15",
+                    "10:20",
+                    "10:25",
+                    "10:30",
+                    "10:35",
+                    "10:40",
+                    "10:45",
+                    "10:50",
+                    "10:55"
+                ],
 
-                            label: "RSSI",
 
-                            data: [],
+                datasets: [
 
-                            borderColor:
-                                "#2563eb",
+                    {
 
-                            backgroundColor:
-                                gradient,
+                        label: "RSSI",
 
-                            borderWidth: 3,
+                        data: [
+                            -60,
+                            -57,
+                            -62,
+                            -55,
+                            -58,
+                            -65,
+                            -61,
+                            -56,
+                            -53,
+                            -57,
+                            -54,
+                            -52
+                        ],
 
-                            fill: true,
+                        borderColor:
+                            "#2563eb",
 
-                            tension: 0.4,
+                        backgroundColor:
+                            gradient,
 
-                            pointRadius: 4,
+                        borderWidth: 3,
 
-                            pointHoverRadius: 6,
+                        fill: true,
 
-                            pointBackgroundColor:
-                                "#ffffff",
+                        tension: 0.4,
 
-                            pointBorderColor:
-                                "#2563eb",
+                        pointRadius: 4,
 
-                            pointBorderWidth: 2
+                        pointHoverRadius: 6,
 
-                        }
-                    ]
+                        pointBackgroundColor:
+                            "#ffffff",
+
+                        pointBorderColor:
+                            "#2563eb",
+
+                        pointBorderWidth: 2
+
+                    }
+
+                ]
+
+            },
+
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+
+                interaction: {
+
+                    intersect: false,
+
+                    mode: "index"
 
                 },
 
 
-                options: {
+                plugins: {
 
-                    responsive: true,
+                    legend: {
 
-                    maintainAspectRatio: false,
-
-
-                    interaction: {
-
-                        intersect: false,
-
-                        mode: "index"
+                        display: false
 
                     },
 
 
-                    plugins: {
+                    tooltip: {
 
-                        legend: {
+                        backgroundColor:
+                            "#0b1630",
+
+                        padding: 12,
+
+                        titleColor:
+                            "#ffffff",
+
+                        bodyColor:
+                            "#dbeafe",
+
+                        displayColors:
+                            false,
+
+
+                        callbacks: {
+
+                            label:
+                                function (
+                                    context
+                                ) {
+
+                                    return (
+                                        "RSSI: "
+                                        +
+                                        context.parsed.y
+                                        +
+                                        " dBm"
+                                    );
+
+                                }
+
+                        }
+
+                    }
+
+                },
+
+
+                scales: {
+
+                    x: {
+
+                        grid: {
 
                             display: false
 
                         },
 
 
-                        tooltip: {
+                        ticks: {
 
-                            callbacks: {
+                            color:
+                                "#94a3b8",
 
-                                label:
-                                    function (
-                                        context
-                                    ) {
+                            font: {
 
-                                        return (
-                                            "RSSI: " +
-                                            context.parsed.y +
-                                            " dBm"
-                                        );
-
-                                    }
+                                size: 10
 
                             }
 
@@ -2601,29 +877,45 @@ function initializeRSSIChart() {
                     },
 
 
-                    scales: {
+                    y: {
 
-                        y: {
+                        min: -90,
 
-                            min: -90,
+                        max: -40,
 
-                            max: -40,
 
-                            ticks: {
+                        ticks: {
 
-                                callback:
-                                    function (
+                            color:
+                                "#94a3b8",
+
+                            font: {
+
+                                size: 10
+
+                            },
+
+
+                            callback:
+                                function (
+                                    value
+                                ) {
+
+                                    return (
                                         value
-                                    ) {
+                                        +
+                                        " dBm"
+                                    );
 
-                                        return (
-                                            value +
-                                            " dBm"
-                                        );
+                                }
 
-                                    }
+                        },
 
-                            }
+
+                        grid: {
+
+                            color:
+                                "rgba(148, 163, 184, 0.16)"
 
                         }
 
@@ -2632,521 +924,9 @@ function initializeRSSIChart() {
                 }
 
             }
-        );
-
-
-    /* =========================================
-       LOAD REAL CHART DATA
-    ========================================= */
-
-    async function updateChart() {
-
-        try {
-
-            const response =
-                await fetch(
-                    API_BASE +
-                    "/api/data"
-                );
-
-
-            if (!response.ok) {
-                return;
-            }
-
-
-            const measurements =
-                await response.json();
-
-
-            const valid =
-                measurements.filter(
-                    function (item) {
-
-                        return (
-                            item.rssi !== undefined &&
-                            !isNaN(
-                                Number(item.rssi)
-                            )
-                        );
-
-                    }
-                );
-
-
-            const recent =
-                valid.slice(-12);
-
-
-            const labels =
-                recent.map(
-                    function (item) {
-
-                        if (
-                            !item.timestamp
-                        ) {
-                            return "";
-                        }
-
-
-                        const date =
-                            new Date(
-                                item.timestamp
-                            );
-
-
-                        if (
-                            isNaN(
-                                date.getTime()
-                            )
-                        ) {
-                            return "";
-                        }
-
-
-                        return (
-                            date
-                                .getHours()
-                                .toString()
-                                .padStart(2, "0")
-                            +
-                            ":" +
-                            date
-                                .getMinutes()
-                                .toString()
-                                .padStart(2, "0")
-                            +
-                            ":" +
-                            date
-                                .getSeconds()
-                                .toString()
-                                .padStart(2, "0")
-                        );
-
-                    }
-                );
-
-
-            const values =
-                recent.map(
-                    function (item) {
-
-                        return Number(
-                            item.rssi
-                        );
-
-                    }
-                );
-
-
-            chart.data.labels =
-                labels;
-
-
-            chart.data.datasets[0].data =
-                values;
-
-
-            chart.update();
-
-
-        } catch (error) {
-
-            console.error(
-                "RSSI chart error:",
-                error
-            );
 
         }
-
-    }
-
-
-    updateChart();
-
-
-    setInterval(
-        updateChart,
-        5000
     );
-
-}
-
-
-/* =========================================================
-   RECENT MEASUREMENTS TABLE
-========================================================= */
-
-async function loadRecentMeasurements() {
-
-    try {
-
-        const response =
-            await fetch(
-                API_BASE +
-                "/api/data"
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Could not load measurements"
-            );
-
-        }
-
-
-        const measurements =
-            await response.json();
-
-
-        const tableBody =
-            document.getElementById(
-                "measurementsBody"
-            );
-
-
-        if (!tableBody) {
-            return;
-        }
-
-
-        tableBody.innerHTML = "";
-
-
-        if (
-            !measurements ||
-            measurements.length === 0
-        ) {
-
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="7" style="text-align:center;">
-                        No measurements available
-                    </td>
-                </tr>
-            `;
-
-            return;
-
-        }
-
-
-        /* =========================================
-           LATEST 10
-        ========================================= */
-
-        const recent =
-            measurements
-                .slice(-10)
-                .reverse();
-
-
-        recent.forEach(
-            function (
-                measurement,
-                index
-            ) {
-
-
-                const row =
-                    document.createElement(
-                        "tr"
-                    );
-
-
-                /* =================================
-                   ID
-                ================================= */
-
-                const id =
-                    measurement.id ||
-                    (
-                        measurements.length -
-                        index
-                    );
-
-
-                /* =================================
-                   LOCATION
-                ================================= */
-
-                const location =
-                    measurement.location ||
-                    "Unknown Location";
-
-
-                /* =================================
-                   RSSI
-                ================================= */
-
-                const rssi =
-                    Number(
-                        measurement.rssi
-                    );
-
-
-                /* =================================
-                   SIGNAL %
-                ================================= */
-
-                const signal =
-                    Number(
-                        measurement.signal_percent
-                    );
-
-
-                /* =================================
-                   SSID
-                ================================= */
-
-                const ssid =
-                    measurement.ssid ||
-                    "Unknown Wi-Fi";
-
-
-                /* =================================
-                   TIME
-                ================================= */
-
-                let timeText =
-                    "Recent";
-
-
-                if (
-                    measurement.timestamp
-                ) {
-
-                    const date =
-                        new Date(
-                            measurement.timestamp
-                        );
-
-
-                    if (
-                        !isNaN(
-                            date.getTime()
-                        )
-                    ) {
-
-                        const seconds =
-                            Math.max(
-
-                                0,
-
-                                Math.floor(
-                                    (
-                                        new Date() -
-                                        date
-                                    ) /
-                                    1000
-                                )
-
-                            );
-
-
-                        if (
-                            seconds < 60
-                        ) {
-
-                            timeText =
-                                seconds +
-                                " sec ago";
-
-                        } else {
-
-                            timeText =
-                                Math.floor(
-                                    seconds /
-                                    60
-                                ) +
-                                " min ago";
-
-                        }
-
-                    }
-
-                }
-
-
-                /* =================================
-                   STATUS
-                ================================= */
-
-                let status =
-                    "Unknown";
-
-
-                let statusClass =
-                    "";
-
-
-                if (!isNaN(rssi)) {
-
-                    if (
-                        rssi >= -59
-                    ) {
-
-                        status =
-                            "Excellent";
-
-                        statusClass =
-                            "excellent";
-
-                    } else if (
-                        rssi >= -66
-                    ) {
-
-                        status =
-                            "Good";
-
-                        statusClass =
-                            "good";
-
-                    } else if (
-                        rssi >= -74
-                    ) {
-
-                        status =
-                            "Fair";
-
-                        statusClass =
-                            "fair";
-
-                    } else if (
-                        rssi >= -79
-                    ) {
-
-                        status =
-                            "Poor";
-
-                        statusClass =
-                            "poor";
-
-                    } else {
-
-                        status =
-                            "Weak";
-
-                        statusClass =
-                            "weak";
-
-                    }
-
-                }
-
-
-                /* =================================
-                   RSSI TEXT CLASS
-                ================================= */
-
-                let rssiClass =
-                    "";
-
-
-                if (!isNaN(rssi)) {
-
-                    if (
-                        rssi >= -66
-                    ) {
-
-                        rssiClass =
-                            "green-text";
-
-                    } else if (
-                        rssi >= -74
-                    ) {
-
-                        rssiClass =
-                            "yellow-text";
-
-                    } else if (
-                        rssi >= -79
-                    ) {
-
-                        rssiClass =
-                            "orange-text";
-
-                    } else {
-
-                        rssiClass =
-                            "red-text";
-
-                    }
-
-                }
-
-
-                /* =================================
-                   TABLE ROW
-                ================================= */
-
-                row.innerHTML = `
-
-                    <td>
-                        <strong>
-                            #M-${id}
-                        </strong>
-                    </td>
-
-                    <td>
-                        ${location}
-                    </td>
-
-                    <td>
-                        <strong class="${rssiClass}">
-                            ${
-                                isNaN(rssi)
-                                    ? "N/A"
-                                    : rssi + " dBm"
-                            }
-                        </strong>
-                    </td>
-
-                    <td>
-                        ${
-                            isNaN(signal)
-                                ? "N/A"
-                                : signal + "%"
-                        }
-                    </td>
-
-                    <td>
-                        ${ssid}
-                    </td>
-
-                    <td>
-                        ${timeText}
-                    </td>
-
-                    <td>
-                        <span
-                            class="table-status ${statusClass}"
-                        >
-                            ${status}
-                        </span>
-                    </td>
-
-                `;
-
-
-                tableBody.appendChild(
-                    row
-                );
-
-            }
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Recent measurements error:",
-            error
-        );
-
-    }
 
 }
 
@@ -3200,18 +980,22 @@ function initializeNavigation() {
 
 function initializeDemoButtons() {
 
-    const buttons =
+    const demoButtons =
         document.querySelectorAll(
             ".secondary-button, .text-button, .outline-button, .period-button"
         );
 
 
-    buttons.forEach(
+    demoButtons.forEach(
         function (button) {
 
             button.addEventListener(
                 "click",
                 function () {
+
+                    const originalText =
+                        button.textContent;
+
 
                     if (
                         button.classList.contains(
@@ -3243,10 +1027,6 @@ function initializeDemoButtons() {
                     }
 
 
-                    const original =
-                        button.innerHTML;
-
-
                     if (
                         button.classList.contains(
                             "outline-button"
@@ -3258,7 +1038,6 @@ function initializeDemoButtons() {
 
                     }
 
-
                     else if (
                         button.classList.contains(
                             "secondary-button"
@@ -3266,10 +1045,9 @@ function initializeDemoButtons() {
                     ) {
 
                         button.innerHTML =
-                            "Analysis Preview Loaded ✓";
+                            "Analysis Preview Loaded <span>✓</span>";
 
                     }
-
 
                     else if (
                         button.classList.contains(
@@ -3278,7 +1056,7 @@ function initializeDemoButtons() {
                     ) {
 
                         button.innerHTML =
-                            "Demo list already displayed ✓";
+                            "Demo list already displayed <span>✓</span>";
 
                     }
 
@@ -3292,8 +1070,8 @@ function initializeDemoButtons() {
                                 )
                             ) {
 
-                                button.innerHTML =
-                                    original;
+                                button.textContent =
+                                    originalText;
 
                             }
 
@@ -3311,99 +1089,663 @@ function initializeDemoButtons() {
 
 
 /* =========================================================
-   BROWSER LOCATION
+   LOAD REAL WIFI DATA
 ========================================================= */
 
-function getCurrentLocation() {
+async function loadWiFiData() {
 
-    if (
-        !navigator.geolocation
-    ) {
+    try {
+
+        const response =
+            await fetch(
+                API_BASE + "/api/wifi"
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Wi-Fi API request failed"
+            );
+
+        }
+
+
+        const wifi =
+            await response.json();
+
+
+        console.log(
+            "Real Wi-Fi data:",
+            wifi
+        );
+
+
+        if (
+            wifi.status === "error"
+        ) {
+
+            console.log(
+                "No measurement available yet."
+            );
+
+            return;
+
+        }
+
+
+        const rssi =
+            wifi.rssi;
+
+
+        const signalPercent =
+            wifi.signal_percent;
+
+
+        const ssid =
+            wifi.ssid;
+
+
+        const band =
+            wifi.band;
+
+
+        const channel =
+            wifi.channel;
+
+
+        /* -----------------------------------------
+           RSSI
+        ----------------------------------------- */
+
+        const rssiElements =
+            document.querySelectorAll(
+                '[data-wifi="rssi"]'
+            );
+
+
+        rssiElements.forEach(
+            function (element) {
+
+                element.textContent =
+                    rssi;
+
+            }
+        );
+
+
+        /* -----------------------------------------
+           SIGNAL %
+        ----------------------------------------- */
+
+        const signalElements =
+            document.querySelectorAll(
+                '[data-wifi="signal-percent"]'
+            );
+
+
+        signalElements.forEach(
+            function (element) {
+
+                element.textContent =
+                    signalPercent
+                    +
+                    "%";
+
+            }
+        );
+
+
+        /* -----------------------------------------
+           SSID
+        ----------------------------------------- */
+
+        const ssidElements =
+            document.querySelectorAll(
+                '[data-wifi="ssid"]'
+            );
+
+
+        ssidElements.forEach(
+            function (element) {
+
+                element.textContent =
+                    ssid;
+
+            }
+        );
+
+
+        /* -----------------------------------------
+           BAND
+        ----------------------------------------- */
+
+        const bandElements =
+            document.querySelectorAll(
+                '[data-wifi="band"]'
+            );
+
+
+        bandElements.forEach(
+            function (element) {
+
+                element.textContent =
+                    band;
+
+            }
+        );
+
+
+        /* -----------------------------------------
+           CHANNEL
+        ----------------------------------------- */
+
+        const channelElements =
+            document.querySelectorAll(
+                '[data-wifi="channel"]'
+            );
+
+
+        channelElements.forEach(
+            function (element) {
+
+                element.textContent =
+                    channel;
+
+            }
+        );
+
+
+        console.log(
+            "RSSI:",
+            rssi,
+            "dBm"
+        );
+
+        console.log(
+            "Signal:",
+            signalPercent + "%"
+        );
+
+        console.log(
+            "SSID:",
+            ssid
+        );
+
+        console.log(
+            "Band:",
+            band
+        );
+
+        console.log(
+            "Channel:",
+            channel
+        );
+
+
+        /* -----------------------------------------
+           TOTAL MEASUREMENTS
+        ----------------------------------------- */
+
+        const dataResponse =
+            await fetch(
+                API_BASE + "/api/data"
+            );
+
+
+        if (dataResponse.ok) {
+
+            const measurements =
+                await dataResponse.json();
+
+
+            const totalElement =
+                document.getElementById(
+                    "totalMeasurements"
+                );
+
+
+            if (totalElement) {
+
+                totalElement.textContent =
+                    measurements.length;
+
+            }
+
+        }
+
+    }
+
+    catch (error) {
 
         console.error(
-            "Geolocation is not supported."
+            "Could not load Wi-Fi data:",
+            error
         );
+
+    }
+
+}
+
+
+/* =========================================================
+   UPDATE LOCATION
+========================================================= */
+
+async function updateLocation() {
+
+    try {
+
+        const response =
+            await fetch(
+                API_BASE + "/api/data"
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Measurement API request failed"
+            );
+
+        }
+
+
+        const measurements =
+            await response.json();
+
+
+        if (
+            measurements.length === 0
+        ) {
+
+            return;
+
+        }
+
+
+        const latest =
+            measurements[
+                measurements.length - 1
+            ];
+
+
+        const location =
+            latest.location ||
+            "Unknown Location";
+
+
+        const locationElement =
+            document.getElementById(
+                "measurementLocation"
+            );
+
+
+        const currentLocationElement =
+            document.getElementById(
+                "currentLocation"
+            );
+
+
+        if (locationElement) {
+
+            locationElement.textContent =
+                location;
+
+        }
+
+
+        if (
+            currentLocationElement
+        ) {
+
+            currentLocationElement.textContent =
+                location;
+
+        }
+
+
+        console.log(
+            "Latest measurement location:",
+            location
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Could not load measurement location:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   AI RECOMMENDATION
+========================================================= */
+
+function updateAIRecommendation(
+    measurements
+) {
+
+    if (
+        !measurements ||
+        measurements.length === 0
+    ) {
 
         return;
 
     }
 
 
-    navigator.geolocation.getCurrentPosition(
+    const validMeasurements =
+        measurements
 
-        function (position) {
+            .filter(
+                item =>
+                    item.rssi !== undefined &&
+                    !isNaN(
+                        Number(
+                            item.rssi
+                        )
+                    )
+            )
 
-            console.log(
-                "Latitude:",
-                position.coords.latitude
+            .map(
+                item => ({
+
+                    rssi:
+                        Number(
+                            item.rssi
+                        ),
+
+                    location:
+                        item.location ||
+                        "Unknown Location"
+
+                })
             );
 
 
-            console.log(
-                "Longitude:",
-                position.coords.longitude
-            );
+    if (
+        validMeasurements.length === 0
+    ) {
+
+        return;
+
+    }
 
 
-            console.log(
-                "Accuracy:",
-                position.coords.accuracy,
-                "meters"
-            );
+    /*
+     * Find strongest signal.
+     *
+     * Example:
+     * -50 dBm is stronger than -80 dBm.
+     */
 
-        },
+    const strongest =
+        validMeasurements.reduce(
+            function (
+                best,
+                current
+            ) {
+
+                return current.rssi >
+                    best.rssi
+                    ? current
+                    : best;
+
+            }
+        );
 
 
-        function (error) {
+    /* -----------------------------------------
+       AVERAGE RSSI
+    ----------------------------------------- */
 
-            console.error(
-                "Location error:",
-                error.message
-            );
+    const averageRSSI =
+        validMeasurements.reduce(
+            function (
+                sum,
+                item
+            ) {
 
-        },
+                return (
+                    sum +
+                    item.rssi
+                );
+
+            },
+            0
+        )
+        /
+        validMeasurements.length;
 
 
-        {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-        }
+    /* -----------------------------------------
+       WEAK MEASUREMENTS
+    ----------------------------------------- */
 
+    const weakCount =
+        validMeasurements.filter(
+            item =>
+                item.rssi <= -80
+        ).length;
+
+
+    /* -----------------------------------------
+       COVERAGE
+    ----------------------------------------- */
+
+    const coveragePercentage =
+        Math.round(
+
+            (
+                (
+                    validMeasurements.length -
+                    weakCount
+                )
+                /
+                validMeasurements.length
+            )
+            *
+            100
+
+        );
+
+
+    /* -----------------------------------------
+       ESTIMATED IMPROVEMENT
+    ----------------------------------------- */
+
+    const improvement =
+        Math.max(
+            0,
+            Math.round(
+                strongest.rssi -
+                averageRSSI
+            )
+        );
+
+
+    /* -----------------------------------------
+       AI RECOMMENDATION TITLE
+    ----------------------------------------- */
+
+    const title =
+        document.getElementById(
+            "aiRecommendation"
+        );
+
+
+    if (title) {
+
+        title.textContent =
+            "Best measured location: "
+            +
+            strongest.location;
+
+    }
+
+
+    /* -----------------------------------------
+       AI DESCRIPTION
+    ----------------------------------------- */
+
+    const description =
+        document.getElementById(
+            "aiRecommendationText"
+        );
+
+
+    if (description) {
+
+        description.textContent =
+            "The strongest measured Wi-Fi signal is "
+            +
+            strongest.rssi
+            +
+            " dBm. The system recommends this measured location as the preferred router placement point.";
+
+    }
+
+
+    /* -----------------------------------------
+       COVERAGE RESULT
+    ----------------------------------------- */
+
+    const weakReduction =
+        document.getElementById(
+            "weakReduction"
+        );
+
+
+    if (weakReduction) {
+
+        weakReduction.textContent =
+            coveragePercentage
+            +
+            "% coverage";
+
+    }
+
+
+    /* -----------------------------------------
+       RSSI IMPROVEMENT
+    ----------------------------------------- */
+
+    const improvementElement =
+        document.getElementById(
+            "rssiImprovement"
+        );
+
+
+    if (improvementElement) {
+
+        improvementElement.textContent =
+            "+"
+            +
+            improvement
+            +
+            " dBm";
+
+    }
+
+
+    /* -----------------------------------------
+       RECOMMENDED LOCATION
+    ----------------------------------------- */
+
+    const locationElement =
+        document.getElementById(
+            "recommendedLocation"
+        );
+
+
+    if (locationElement) {
+
+        locationElement.textContent =
+            strongest.location;
+
+    }
+
+
+    console.log(
+        "========== AI RECOMMENDATION =========="
+    );
+
+    console.log(
+        "Total measurements:",
+        validMeasurements.length
+    );
+
+    console.log(
+        "Strongest RSSI:",
+        strongest.rssi + " dBm"
+    );
+
+    console.log(
+        "Best location:",
+        strongest.location
+    );
+
+    console.log(
+        "Average RSSI:",
+        averageRSSI.toFixed(1)
+        +
+        " dBm"
+    );
+
+    console.log(
+        "Weak measurements:",
+        weakCount
+    );
+
+    console.log(
+        "Coverage:",
+        coveragePercentage
+        +
+        "%"
+    );
+
+    console.log(
+        "Estimated improvement:",
+        improvement
+        +
+        " dBm"
+    );
+
+    console.log(
+        "======================================="
     );
 
 }
 
 
 /* =========================================================
-   AUTO REFRESH
+   START REAL-TIME UPDATES
 ========================================================= */
 
+loadWiFiData();
+
+updateLocation();
+
+
+/*
+ * Refresh dashboard every 5 seconds.
+ */
+
 setInterval(
-    function () {
-
-        loadWiFiData();
-
-    },
+    loadWiFiData,
     5000
 );
 
 
 setInterval(
-    function () {
-
-        updateLocation();
-
-    },
-    5000
-);
-
-
-setInterval(
-    function () {
-
-        loadRecentMeasurements();
-
-    },
+    updateLocation,
     5000
 );
